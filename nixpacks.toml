@@ -1,6 +1,6 @@
 [phases.setup]
-# 与 Dockerfile 对齐：Node 20、Prisma 需 openssl；start 需 tini 做信号转发（同 ENTRYPOINT tini）
-nixPkgs = ["nodejs_20", "openssl", "pnpm", "bash", "coreutils", "tini", "python311", "python311Packages.pip", "python311Packages.setuptools", "yt-dlp", "curl", "deno"]
+# 与 Dockerfile 对齐：Node 20、Prisma 需 openssl。不在 nixPkgs 装 tini：当前 Nixpacks 所用 nixpkgs 里 tini0.19 与新版 CMake 不兼容会构建失败；信号由容器/PaaS 处理。Docker 镜像仍可用 ENTRYPOINT tini。
+nixPkgs = ["nodejs_20", "openssl", "pnpm", "bash", "coreutils", "python311", "python311Packages.pip", "python311Packages.setuptools", "yt-dlp", "curl", "deno"]
 cmds = [
   "mkdir -p /bin /usr/bin",
   "sh -c 'BASH_PATH=$(command -v bash 2>/dev/null || find /nix/store -path \"*/bin/bash\" -type f -executable 2>/dev/null | head -1); if [ -n \"$BASH_PATH\" ] && [ -x \"$BASH_PATH\" ]; then ln -sf \"$BASH_PATH\" /bin/bash && chmod +x /bin/bash; echo \"Bash linked to /bin/bash from $BASH_PATH\"; else echo \"Warning: Could not find bash executable\"; exit 1; fi'",
@@ -39,8 +39,8 @@ cmds = [
 cmds = [
   "sh -c 'if [ ! -x /usr/bin/yt-dlp ]; then YTDLP_PATH=$(command -v yt-dlp 2>/dev/null); if [ -n \"$YTDLP_PATH\" ] && [ -x \"$YTDLP_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_PATH\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup: $YTDLP_PATH\"; else YTDLP_USER_BIN=$(python3 -c \"import site; import os; bin_path = os.path.join(site.USER_BASE, \"bin\"); print(bin_path)\" 2>/dev/null)/yt-dlp; if [ -f \"$YTDLP_USER_BIN\" ] && [ -x \"$YTDLP_USER_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_USER_BIN\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from user bin: $YTDLP_USER_BIN\"; else YTDLP_SYSTEM=$(find /nix/store -path \"*/bin/yt-dlp\" -type f -executable 2>/dev/null | head -1); if [ -n \"$YTDLP_SYSTEM\" ] && [ -x \"$YTDLP_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_SYSTEM\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from nix: $YTDLP_SYSTEM\"; else echo \"WARNING: yt-dlp not found, will use python3 -m yt_dlp\"; fi; fi; fi; fi'",
   "sh -c 'if [ ! -x /usr/bin/deno ]; then DENO_PATH=$(command -v deno 2>/dev/null); if [ -n \"$DENO_PATH\" ] && [ -x \"$DENO_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_PATH\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup: $DENO_PATH\"; else DENO_SYSTEM=$(find /nix/store -path \"*/bin/deno\" -type f -executable 2>/dev/null | head -1); if [ -n \"$DENO_SYSTEM\" ] && [ -x \"$DENO_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_SYSTEM\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup from nix: $DENO_SYSTEM\"; fi; fi; fi'",
-  # 与 Dockerfile CMD 一致：不用 standalone 单进程，统一 pnpm run start（Next + worker + watchdog + board）；tsx --env-file=.env 需空文件存在
-  "sh -c 'mkdir -p logs; touch .env; TINI=$(command -v tini 2>/dev/null || true); if [ -n \"$TINI\" ] && [ -x \"$TINI\" ]; then exec \"$TINI\" -- pnpm run start; else exec pnpm run start; fi'"
+  # 与 Dockerfile CMD 一致：pnpm run start（Next + worker + watchdog + board）；tsx --env-file=.env 需空文件存在
+  "sh -c 'mkdir -p logs; touch .env; exec pnpm run start'"
 ]
 
 [variables]
