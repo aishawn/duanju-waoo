@@ -35,13 +35,10 @@ cmds = [
   "sh -c 'if [ ! -d \".next\" ]; then echo \"ERROR: .next directory not found after build\"; exit 1; fi'"
 ]
 
-[phases.start]
-cmds = [
-  "sh -c 'if [ ! -x /usr/bin/yt-dlp ]; then YTDLP_PATH=$(command -v yt-dlp 2>/dev/null); if [ -n \"$YTDLP_PATH\" ] && [ -x \"$YTDLP_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_PATH\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup: $YTDLP_PATH\"; else YTDLP_USER_BIN=$(python3 -c \"import site; import os; bin_path = os.path.join(site.USER_BASE, \"bin\"); print(bin_path)\" 2>/dev/null)/yt-dlp; if [ -f \"$YTDLP_USER_BIN\" ] && [ -x \"$YTDLP_USER_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_USER_BIN\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from user bin: $YTDLP_USER_BIN\"; else YTDLP_SYSTEM=$(find /nix/store -path \"*/bin/yt-dlp\" -type f -executable 2>/dev/null | head -1); if [ -n \"$YTDLP_SYSTEM\" ] && [ -x \"$YTDLP_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_SYSTEM\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from nix: $YTDLP_SYSTEM\"; else echo \"WARNING: yt-dlp not found, will use python3 -m yt_dlp\"; fi; fi; fi; fi'",
-  "sh -c 'if [ ! -x /usr/bin/deno ]; then DENO_PATH=$(command -v deno 2>/dev/null); if [ -n \"$DENO_PATH\" ] && [ -x \"$DENO_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_PATH\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup: $DENO_PATH\"; else DENO_SYSTEM=$(find /nix/store -path \"*/bin/deno\" -type f -executable 2>/dev/null | head -1); if [ -n \"$DENO_SYSTEM\" ] && [ -x \"$DENO_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_SYSTEM\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup from nix: $DENO_SYSTEM\"; fi; fi; fi'",
-  # 与 Dockerfile CMD 一致：pnpm run start（Next + worker + watchdog + board）；tsx --env-file=.env 需空文件存在
-  "sh -c 'mkdir -p logs; touch .env; exec pnpm run start'"
-]
+# 必须用 [start].cmd，不能用 [phases.start]：后者会被当成构建阶段的 RUN，在 COPY 之后执行且常无 node_modules，导致 tsx 找不到。
+# 容器启动时再跑（等同 Dockerfile 的 CMD）。setup/install 里已把 yt-dlp/deno 链到 /usr/bin，一般无需在启动重复。
+[start]
+cmd = "sh -c 'mkdir -p logs; touch .env; exec pnpm run start'"
 
 [variables]
 NODE_ENV = "production"
