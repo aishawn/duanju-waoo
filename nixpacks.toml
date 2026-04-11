@@ -1,0 +1,48 @@
+[phases.setup]
+# 与 Dockerfile 对齐：Node 20、Prisma 需 openssl；start 需 tini 做信号转发（同 ENTRYPOINT tini）
+nixPkgs = ["nodejs_20", "openssl", "pnpm", "bash", "coreutils", "tini", "python311", "python311Packages.pip", "python311Packages.setuptools", "yt-dlp", "curl", "deno"]
+cmds = [
+  "mkdir -p /bin /usr/bin",
+  "sh -c 'BASH_PATH=$(command -v bash 2>/dev/null || find /nix/store -path \"*/bin/bash\" -type f -executable 2>/dev/null | head -1); if [ -n \"$BASH_PATH\" ] && [ -x \"$BASH_PATH\" ]; then ln -sf \"$BASH_PATH\" /bin/bash && chmod +x /bin/bash; echo \"Bash linked to /bin/bash from $BASH_PATH\"; else echo \"Warning: Could not find bash executable\"; exit 1; fi'",
+  "sh -c 'PYTHON_PATH=$(command -v python3 2>/dev/null || find /nix/store -path \"*/bin/python3\" -type f -executable 2>/dev/null | head -1); if [ -n \"$PYTHON_PATH\" ]; then ln -sf \"$PYTHON_PATH\" /usr/bin/python3 && ln -sf \"$PYTHON_PATH\" /usr/bin/python && chmod +x /usr/bin/python3 /usr/bin/python; echo \"Python linked from $PYTHON_PATH\"; fi'",
+  "sh -c 'PIP_PATH=$(command -v pip3 2>/dev/null || find /nix/store -path \"*/bin/pip3\" -type f -executable 2>/dev/null | head -1); if [ -n \"$PIP_PATH\" ]; then ln -sf \"$PIP_PATH\" /usr/bin/pip3 && ln -sf \"$PIP_PATH\" /usr/bin/pip && chmod +x /usr/bin/pip3 /usr/bin/pip; echo \"Pip linked from $PIP_PATH\"; fi'",
+  "sh -c 'YTDLP_PATH=$(command -v yt-dlp 2>/dev/null || find /nix/store -path \"*/bin/yt-dlp\" -type f -executable 2>/dev/null | head -1); if [ -n \"$YTDLP_PATH\" ]; then ln -sf \"$YTDLP_PATH\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp; echo \"yt-dlp linked from $YTDLP_PATH\"; fi'",
+  "sh -c 'DENO_PATH=$(command -v deno 2>/dev/null || find /nix/store -path \"*/bin/deno\" -type f -executable 2>/dev/null | head -1); if [ -n \"$DENO_PATH\" ]; then ln -sf \"$DENO_PATH\" /usr/bin/deno && chmod +x /usr/bin/deno; echo \"deno linked from $DENO_PATH\"; fi'"
+]
+
+[phases.install]
+cmds = [
+  "sh -c 'if [ ! -x /bin/bash ]; then BASH_PATH=$(command -v bash 2>/dev/null || find /nix/store -path \"*/bin/bash\" -type f -executable 2>/dev/null | head -1); if [ -n \"$BASH_PATH\" ] && [ -x \"$BASH_PATH\" ]; then mkdir -p /bin && ln -sf \"$BASH_PATH\" /bin/bash && chmod +x /bin/bash; fi; fi'",
+  "sh -c 'if [ ! -x /usr/bin/python3 ]; then PYTHON_PATH=$(command -v python3 2>/dev/null || find /nix/store -path \"*/bin/python3\" -type f -executable 2>/dev/null | head -1); if [ -n \"$PYTHON_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$PYTHON_PATH\" /usr/bin/python3 && ln -sf \"$PYTHON_PATH\" /usr/bin/python && chmod +x /usr/bin/python3 /usr/bin/python; fi; fi'",
+  "sh -c 'PIP_PATH=$(command -v pip3 2>/dev/null || find /nix/store -path \"*/bin/pip3\" -type f -executable 2>/dev/null | head -1); if [ -n \"$PIP_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$PIP_PATH\" /usr/bin/pip3 && ln -sf \"$PIP_PATH\" /usr/bin/pip && chmod +x /usr/bin/pip3 /usr/bin/pip && echo \"Pip linked from $PIP_PATH\"; fi'",
+  "sh -c 'echo \"Installing yt-dlp via pip to ensure runtime availability...\"; if ! python3 -m pip --version >/dev/null 2>&1 && ! pip3 --version >/dev/null 2>&1; then echo \"Installing pip via ensurepip...\"; python3 -m ensurepip --upgrade 2>/dev/null || python3 -m ensurepip 2>/dev/null || (echo \"ensurepip not available, downloading get-pip.py...\" && curl -sSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && python3 /tmp/get-pip.py && rm -f /tmp/get-pip.py); fi; INSTALLED=0; if command -v pip3 >/dev/null 2>&1; then pip3 install --break-system-packages yt-dlp >/dev/null 2>&1 && INSTALLED=1 || pip3 install yt-dlp >/dev/null 2>&1 && INSTALLED=1 || pip3 install --user yt-dlp >/dev/null 2>&1 && INSTALLED=1; elif python3 -m pip --version >/dev/null 2>&1; then python3 -m pip install --break-system-packages yt-dlp >/dev/null 2>&1 && INSTALLED=1 || python3 -m pip install yt-dlp >/dev/null 2>&1 && INSTALLED=1 || python3 -m pip install --user yt-dlp >/dev/null 2>&1 && INSTALLED=1; fi; if [ \"$INSTALLED\" -eq 0 ]; then echo \"ERROR: Failed to install yt-dlp via pip\"; exit 1; else echo \"yt-dlp installed successfully via pip\"; fi'",
+  "sh -c 'if command -v yt-dlp >/dev/null 2>&1; then yt-dlp --version && echo \"yt-dlp verified successfully (command)\"; elif python3 -m yt_dlp --version >/dev/null 2>&1; then python3 -m yt_dlp --version && echo \"yt-dlp verified successfully (module)\"; else echo \"ERROR: yt-dlp installation failed\"; exit 1; fi'",
+  "sh -c 'echo \"Verifying Python module accessibility...\"; if python3 -c \"import yt_dlp; print(yt_dlp.__version__)\" >/dev/null 2>&1; then echo \"Python module yt_dlp is accessible\"; else echo \"WARNING: Python module yt_dlp may not be accessible at runtime, but binary should work\"; fi'",
+  "sh -c 'YTDLP_BIN=$(command -v yt-dlp 2>/dev/null); if [ -n \"$YTDLP_BIN\" ] && [ -x \"$YTDLP_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_BIN\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked to /usr/bin/yt-dlp from $YTDLP_BIN\"; else YTDLP_USER_BIN=$(python3 -c \"import site; import os; bin_path = os.path.join(site.USER_BASE, \"bin\"); print(bin_path)\" 2>/dev/null)/yt-dlp; if [ -f \"$YTDLP_USER_BIN\" ] && [ -x \"$YTDLP_USER_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_USER_BIN\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked to /usr/bin/yt-dlp from $YTDLP_USER_BIN\"; else YTDLP_SYSTEM=$(find /nix/store -path \"*/bin/yt-dlp\" -type f -executable 2>/dev/null | head -1); if [ -n \"$YTDLP_SYSTEM\" ] && [ -x \"$YTDLP_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_SYSTEM\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked from system: $YTDLP_SYSTEM\"; else echo \"yt-dlp installed via pip, will use python3 -m yt_dlp\"; fi; fi; fi'",
+  "sh -c 'DENO_BIN=$(command -v deno 2>/dev/null); if [ -n \"$DENO_BIN\" ] && [ -x \"$DENO_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_BIN\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked to /usr/bin/deno from $DENO_BIN\"; else DENO_SYSTEM=$(find /nix/store -path \"*/bin/deno\" -type f -executable 2>/dev/null | head -1); if [ -n \"$DENO_SYSTEM\" ] && [ -x \"$DENO_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_SYSTEM\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked from system: $DENO_SYSTEM\"; fi; fi'",
+  # Dockerfile 保留 devDeps（concurrently、tsx）；全局 NODE_ENV=production 时 pnpm 会省略 devDependencies，安装阶段强制 development
+  "sh -c 'NODE_ENV=development pnpm install --frozen-lockfile'",
+  "sh -c 'if [ ! -d \"node_modules\" ]; then echo \"ERROR: node_modules directory not found after pnpm install\"; exit 1; fi'",
+  "sh -c 'if [ ! -f \"node_modules/.bin/next\" ]; then echo \"ERROR: next binary not found in node_modules\"; exit 1; fi'"
+]
+
+[phases.build]
+cmds = [
+  "sh -c 'if [ ! -x /bin/bash ]; then BASH_PATH=$(command -v bash 2>/dev/null || find /nix/store -path \"*/bin/bash\" -type f -executable 2>/dev/null | head -1); if [ -n \"$BASH_PATH\" ] && [ -x \"$BASH_PATH\" ]; then mkdir -p /bin && ln -sf \"$BASH_PATH\" /bin/bash && chmod +x /bin/bash; fi; fi'",
+  "sh -c 'if [ ! -d \"node_modules\" ]; then echo \"ERROR: node_modules missing before build\"; exit 1; fi'",
+  "bash -c 'ulimit -n 8192 || true'",
+  "sh -c 'NODE_ENV=production pnpm run build'",
+  "sh -c 'if [ ! -d \".next\" ]; then echo \"ERROR: .next directory not found after build\"; exit 1; fi'"
+]
+
+[phases.start]
+cmds = [
+  "sh -c 'if [ ! -x /usr/bin/yt-dlp ]; then YTDLP_PATH=$(command -v yt-dlp 2>/dev/null); if [ -n \"$YTDLP_PATH\" ] && [ -x \"$YTDLP_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_PATH\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup: $YTDLP_PATH\"; else YTDLP_USER_BIN=$(python3 -c \"import site; import os; bin_path = os.path.join(site.USER_BASE, \"bin\"); print(bin_path)\" 2>/dev/null)/yt-dlp; if [ -f \"$YTDLP_USER_BIN\" ] && [ -x \"$YTDLP_USER_BIN\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_USER_BIN\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from user bin: $YTDLP_USER_BIN\"; else YTDLP_SYSTEM=$(find /nix/store -path \"*/bin/yt-dlp\" -type f -executable 2>/dev/null | head -1); if [ -n \"$YTDLP_SYSTEM\" ] && [ -x \"$YTDLP_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$YTDLP_SYSTEM\" /usr/bin/yt-dlp && chmod +x /usr/bin/yt-dlp && echo \"yt-dlp linked at startup from nix: $YTDLP_SYSTEM\"; else echo \"WARNING: yt-dlp not found, will use python3 -m yt_dlp\"; fi; fi; fi; fi'",
+  "sh -c 'if [ ! -x /usr/bin/deno ]; then DENO_PATH=$(command -v deno 2>/dev/null); if [ -n \"$DENO_PATH\" ] && [ -x \"$DENO_PATH\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_PATH\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup: $DENO_PATH\"; else DENO_SYSTEM=$(find /nix/store -path \"*/bin/deno\" -type f -executable 2>/dev/null | head -1); if [ -n \"$DENO_SYSTEM\" ] && [ -x \"$DENO_SYSTEM\" ]; then mkdir -p /usr/bin && ln -sf \"$DENO_SYSTEM\" /usr/bin/deno && chmod +x /usr/bin/deno && echo \"deno linked at startup from nix: $DENO_SYSTEM\"; fi; fi; fi'",
+  # 与 Dockerfile CMD 一致：不用 standalone 单进程，统一 pnpm run start（Next + worker + watchdog + board）；tsx --env-file=.env 需空文件存在
+  "sh -c 'mkdir -p logs; touch .env; TINI=$(command -v tini 2>/dev/null || true); if [ -n \"$TINI\" ] && [ -x \"$TINI\" ]; then exec \"$TINI\" -- pnpm run start; else exec pnpm run start; fi'"
+]
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
