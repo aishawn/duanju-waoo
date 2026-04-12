@@ -69,19 +69,17 @@ export default function ConfigStage() {
   return (
     <div className="flex flex-col gap-0">
       {/* 模式切换 Tab */}
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        marginBottom: '0',
-        paddingLeft: '24px',
-        paddingTop: '8px',
-      }}>
+      <div
+        className="flex border-b pl-6 pt-2"
+        style={{ borderColor: 'var(--glass-stroke-base)' }}
+      >
         {([
           { key: 'novel', label: t('modeTab.novel') },
           { key: 'adFilm', label: t('modeTab.adFilm') },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
+            type="button"
             onClick={() => setMode(key)}
             style={{
               padding: '8px 20px',
@@ -89,10 +87,10 @@ export default function ConfigStage() {
               fontWeight: mode === key ? 600 : 400,
               border: 'none',
               borderBottom: mode === key
-                ? '2px solid rgba(99,102,241,0.8)'
+                ? '2px solid var(--glass-tone-info-fg)'
                 : '2px solid transparent',
               background: 'transparent',
-              color: mode === key ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
+              color: mode === key ? 'var(--glass-text-primary)' : 'var(--glass-text-tertiary)',
               cursor: 'pointer',
               transition: 'all 0.2s',
               marginBottom: '-1px',

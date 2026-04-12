@@ -189,24 +189,27 @@ export default function AdBriefStage({
     <div className="flex flex-col gap-6 p-6 max-w-2xl mx-auto">
       {/* 标题 */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h2 className="text-xl font-bold text-white">{t('title')}</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-[var(--glass-text-primary)]">{t('title')}</h2>
           {/* 自动保存状态指示 */}
           {autoSaveState !== 'idle' && (
-            <span style={{
-              fontSize: '12px',
-              color: autoSaveState === 'saving' ? 'rgba(255,255,255,0.4)'
-                : autoSaveState === 'saved' ? 'rgb(74, 222, 128)'
-                : 'rgb(248, 113, 113)',
-              transition: 'color 0.3s'
-            }}>
+            <span
+              className="text-xs transition-colors duration-300"
+              style={{
+                color: autoSaveState === 'saving'
+                  ? 'var(--glass-text-tertiary)'
+                  : autoSaveState === 'saved'
+                    ? 'var(--glass-tone-success-fg)'
+                    : 'var(--glass-tone-danger-fg)',
+              }}
+            >
               {autoSaveState === 'saving' ? t('autosave.saving')
                 : autoSaveState === 'saved' ? t('autosave.saved')
                 : t('autosave.error')}
             </span>
           )}
         </div>
-        <p className="text-sm text-white/60 mt-1">{t('subtitle')}</p>
+        <p className="text-sm text-[var(--glass-text-tertiary)] mt-1">{t('subtitle')}</p>
       </div>
 
       {/* 品牌名称 */}
@@ -247,7 +250,7 @@ export default function AdBriefStage({
                 <button
                   type="button"
                   onClick={() => removeSellingPoint(idx)}
-                  className="text-white/40 hover:text-red-400 px-2 transition-colors"
+                  className="text-[var(--glass-text-tertiary)] hover:text-[var(--glass-tone-danger-fg)] px-2 transition-colors"
                 >
                   ✕
                 </button>
@@ -258,7 +261,7 @@ export default function AdBriefStage({
             <button
               type="button"
               onClick={addSellingPoint}
-              className="text-sm text-blue-400 hover:text-blue-300 text-left transition-colors"
+              className="text-sm text-left font-medium text-[var(--glass-tone-info-fg)] hover:opacity-90 transition-opacity"
             >
               {t('form.addSellingPoint')}
             </button>
@@ -288,8 +291,8 @@ export default function AdBriefStage({
               className={`
                 px-3 py-2 rounded-lg text-sm font-medium transition-all border
                 ${emotionTone === tone.value
-                  ? 'bg-blue-600/30 border-blue-400 text-blue-300'
-                  : 'bg-white/5 border-white/10 text-white/70 hover:border-white/30'
+                  ? 'bg-[var(--glass-tone-info-bg)] border-[var(--glass-stroke-focus)] text-[var(--glass-tone-info-fg)]'
+                  : 'bg-[var(--glass-bg-muted)] border-[var(--glass-stroke-base)] text-[var(--glass-text-secondary)] hover:border-[var(--glass-stroke-strong)]'
                 }
               `}
             >
@@ -311,8 +314,8 @@ export default function AdBriefStage({
                 className={`
                   px-3 py-2 rounded-lg text-sm text-left transition-all border
                   ${adType === type.value
-                    ? 'bg-purple-600/30 border-purple-400 text-purple-300'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:border-white/30'
+                    ? 'bg-[color:rgba(124,58,237,0.15)] border-[color:rgba(124,58,237,0.45)] text-[color:#5b21b6]'
+                    : 'bg-[var(--glass-bg-muted)] border-[var(--glass-stroke-base)] text-[var(--glass-text-secondary)] hover:border-[var(--glass-stroke-strong)]'
                   }
                 `}
               >
@@ -332,8 +335,8 @@ export default function AdBriefStage({
                 className={`
                   px-3 py-2 rounded-lg text-sm text-left transition-all border
                   ${durationSec === d.value
-                    ? 'bg-green-600/30 border-green-400 text-green-300'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:border-white/30'
+                    ? 'bg-[var(--glass-tone-success-bg)] border-[var(--glass-stroke-success)] text-[var(--glass-tone-success-fg)]'
+                    : 'bg-[var(--glass-bg-muted)] border-[var(--glass-stroke-base)] text-[var(--glass-text-secondary)] hover:border-[var(--glass-stroke-strong)]'
                   }
                 `}
               >
@@ -367,11 +370,11 @@ export default function AdBriefStage({
       </FormField>
 
       {/* 制作提示 */}
-      <div className="rounded-xl bg-blue-900/20 border border-blue-800/30 p-4">
-        <p className="text-xs font-semibold text-blue-400 mb-2">{t('tips.title')}</p>
+      <div className="rounded-xl border p-4 bg-[var(--glass-tone-info-bg)] border-[var(--glass-stroke-base)]">
+        <p className="text-xs font-semibold text-[var(--glass-tone-info-fg)] mb-2">{t('tips.title')}</p>
         <ul className="space-y-1">
           {(['tip1', 'tip2', 'tip3', 'tip4'] as const).map(tip => (
-            <li key={tip} className="text-xs text-white/50">
+            <li key={tip} className="text-xs text-[var(--glass-text-secondary)]">
               {t(`tips.${tip}`)}
             </li>
           ))}
@@ -380,7 +383,7 @@ export default function AdBriefStage({
 
       {/* 错误提示 */}
       {error && (
-        <div className="rounded-lg bg-red-900/30 border border-red-800/50 p-3 text-sm text-red-300">
+        <div className="rounded-lg border p-3 text-sm bg-[var(--glass-tone-danger-bg)] border-[var(--glass-stroke-danger)] text-[var(--glass-tone-danger-fg)]">
           {error}
         </div>
       )}
@@ -417,20 +420,20 @@ function FormField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-white/80">{label}</label>
+      <label className="text-sm font-medium text-[var(--glass-text-secondary)]">{label}</label>
       {children}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-[var(--glass-tone-danger-fg)]">{error}</p>}
     </div>
   )
 }
 
 function inputClass(hasError: boolean): string {
   return [
-    'w-full px-3 py-2 rounded-lg text-sm text-white bg-white/5',
+    'w-full px-3 py-2 rounded-lg text-sm text-[var(--glass-text-primary)] bg-[var(--glass-bg-surface)]',
     'border transition-colors outline-none',
     hasError
-      ? 'border-red-500/70 focus:border-red-400'
-      : 'border-white/10 focus:border-blue-400/70',
-    'placeholder:text-white/30',
+      ? 'border-[var(--glass-stroke-danger)] focus:border-[var(--glass-stroke-danger)]'
+      : 'border-[var(--glass-stroke-base)] focus:border-[var(--glass-stroke-focus)]',
+    'placeholder:text-[var(--glass-text-tertiary)]',
   ].join(' ')
 }
