@@ -40,6 +40,7 @@ const TASK_INTENT_BY_TYPE: Record<TaskType, TaskIntent> = {
   [TASK_TYPE.ANALYZE_NOVEL]: 'analyze',
   [TASK_TYPE.STORY_TO_SCRIPT_RUN]: 'build',
   [TASK_TYPE.SCRIPT_TO_STORYBOARD_RUN]: 'build',
+  [TASK_TYPE.AD_BRIEF_TO_SCRIPT]: 'build',
   [TASK_TYPE.CLIPS_BUILD]: 'build',
   [TASK_TYPE.SCREENPLAY_CONVERT]: 'convert',
   [TASK_TYPE.VOICE_ANALYZE]: 'analyze',
