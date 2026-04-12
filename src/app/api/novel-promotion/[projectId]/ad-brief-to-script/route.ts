@@ -26,10 +26,12 @@ export const POST = apiHandler(async (
   const brief = body?.brief as AdBrief | undefined
 
   if (!episodeId) {
-    throw new ApiError('INVALID_PARAMS', 'episodeId is required')
+    throw new ApiError('INVALID_PARAMS', { message: 'episodeId is required' })
   }
   if (!brief || !brief.brandName || !brief.productName) {
-    throw new ApiError('INVALID_PARAMS', 'brief.brandName and brief.productName are required')
+    throw new ApiError('INVALID_PARAMS', {
+      message: 'brief.brandName and brief.productName are required',
+    })
   }
 
   const authResult = await requireProjectAuthLight(projectId)
