@@ -463,38 +463,43 @@ export function VideoEditorStage({
                                     }}
                                 />
                                 {/* 字幕样式选择 */}
-                                {selectedClip.attachment?.subtitle && (
-                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-                                        {(['default', 'cinematic'] as const).map((style) => (
-                                            <button
-                                                key={style}
-                                                onClick={() => {
-                                                    updateClip(selectedClip.id, {
-                                                        attachment: {
-                                                            ...selectedClip.attachment,
-                                                            subtitle: {
-                                                                text: selectedClip.attachment!.subtitle!.text,
-                                                                style
+                                {(() => {
+                                    const attachment = selectedClip.attachment
+                                    const subtitle = attachment?.subtitle
+                                    if (!attachment || !subtitle) return null
+                                    return (
+                                        <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                                            {(['default', 'cinematic'] as const).map((style) => (
+                                                <button
+                                                    key={style}
+                                                    onClick={() => {
+                                                        updateClip(selectedClip.id, {
+                                                            attachment: {
+                                                                ...attachment,
+                                                                subtitle: {
+                                                                    text: subtitle.text,
+                                                                    style
+                                                                }
                                                             }
-                                                        }
-                                                    })
-                                                }}
-                                                style={{
-                                                    padding: '3px 10px', fontSize: '11px', borderRadius: '4px',
-                                                    border: 'none', cursor: 'pointer',
-                                                    background: selectedClip.attachment?.subtitle?.style === style
-                                                        ? 'var(--glass-accent-from)'
-                                                        : 'var(--glass-bg-muted)',
-                                                    color: selectedClip.attachment?.subtitle?.style === style
-                                                        ? 'var(--glass-text-on-accent)'
-                                                        : 'var(--glass-text-secondary)'
-                                                }}
-                                            >
-                                                {t(`editor.right.subtitleStyle.${style}`)}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                                        })
+                                                    }}
+                                                    style={{
+                                                        padding: '3px 10px', fontSize: '11px', borderRadius: '4px',
+                                                        border: 'none', cursor: 'pointer',
+                                                        background: subtitle.style === style
+                                                            ? 'var(--glass-accent-from)'
+                                                            : 'var(--glass-bg-muted)',
+                                                        color: subtitle.style === style
+                                                            ? 'var(--glass-text-on-accent)'
+                                                            : 'var(--glass-text-secondary)'
+                                                    }}
+                                                >
+                                                    {t(`editor.right.subtitleStyle.${style}`)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )
+                                })()}
                             </div>
 
                             {/* ── 转场设置 ── */}
