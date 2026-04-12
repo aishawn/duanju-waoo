@@ -1,12 +1,16 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import type { Adapter } from "next-auth/adapters"
+import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { logAuthAction } from './logging/semantic'
 import { prisma } from './prisma'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const authOptions: any = {
-  adapter: PrismaAdapter(prisma),
+// PrismaAdapter types expect default @prisma/client; this app uses a generated client (same runtime API).
+// Whole-config `as NextAuthOptions` avoids deep generic checking against adapter + providers.
+export const authOptions = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- bridge two PrismaClient module instances
+  adapter: PrismaAdapter(prisma as any) as Adapter,
   // 🔥 允许从任意 Host 访问（解决局域网访问问题）
   trustHost: true,
   // 🔥 根据 URL 协议决定是否使用 Secure Cookie
@@ -75,4 +79,4 @@ export const authOptions: any = {
       return session
     }
   }
-}
+} as NextAuthOptions
