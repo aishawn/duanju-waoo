@@ -27,6 +27,7 @@ const TASK_TYPE_OWNER_MAP = {
   [TASK_TYPE.ANALYZE_NOVEL]: 'tests/unit/worker/analyze-novel.test.ts',
   [TASK_TYPE.STORY_TO_SCRIPT_RUN]: 'tests/unit/worker/story-to-script.test.ts',
   [TASK_TYPE.SCRIPT_TO_STORYBOARD_RUN]: 'tests/unit/worker/script-to-storyboard.test.ts',
+  [TASK_TYPE.AD_BRIEF_TO_SCRIPT]: 'tests/unit/worker/story-to-script.test.ts',
   [TASK_TYPE.CLIPS_BUILD]: 'tests/unit/worker/clips-build.test.ts',
   [TASK_TYPE.SCREENPLAY_CONVERT]: 'tests/unit/worker/screenplay-convert.test.ts',
   [TASK_TYPE.VOICE_ANALYZE]: 'tests/unit/worker/voice-analyze.test.ts',

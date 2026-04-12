@@ -15,12 +15,17 @@ import { resolveProjectModelCapabilityGenerationOptions } from '@/lib/config-ser
 import { withInternalLLMStreamCallbacks } from '@/lib/llm-observe/internal-stream-context'
 import { logAIAnalysis } from '@/lib/logging/semantic'
 import { reportTaskProgress } from '@/lib/workers/shared'
-import { getPromptTemplate, PROMPT_IDS, buildPrompt } from '@/lib/prompt-i18n'
+import { PROMPT_IDS, buildPrompt } from '@/lib/prompt-i18n'
 import { resolveAnalysisModel } from './resolve-analysis-model'
 import { createWorkerLLMStreamCallbacks, createWorkerLLMStreamContext } from './llm-stream'
 import type { TaskJobData } from '@/lib/task/types'
 import type { AdBrief } from '@/types/project'
 import { getArtStylePrompt } from '@/lib/constants'
+import { parseEffort, parseTemperature } from './story-to-script-helpers'
+
+function isReasoningEffort(value: unknown): value is 'minimal' | 'low' | 'medium' | 'high' {
+  return value === 'minimal' || value === 'low' || value === 'medium' || value === 'high'
+}
 
 type AnyObj = Record<string, unknown>
 
@@ -91,7 +96,9 @@ export async function handleAdBriefToScriptTask(job: Job<TaskJobData>) {
   const projectId = job.data.projectId
   const episodeId = asString(payload.episodeId || job.data.episodeId || '')
   const inputModel = asString(payload.model).trim()
-  const locale = asString(payload.locale || 'zh') as 'zh' | 'en'
+  const reasoning = payload.reasoning !== false
+  const requestedReasoningEffort = parseEffort(payload.reasoningEffort)
+  const temperature = parseTemperature(payload.temperature)
 
   if (!episodeId) {
     throw new Error('episodeId is required for ad_brief_to_script task')
@@ -116,32 +123,43 @@ export async function handleAdBriefToScriptTask(job: Job<TaskJobData>) {
 
   // 2. 解析模型
   const model = await resolveAnalysisModel({
+    userId: job.data.userId,
+    inputModel: inputModel || undefined,
+    projectAnalysisModel: novelData.analysisModel,
+  })
+
+  const llmCapabilityOptions = await resolveProjectModelCapabilityGenerationOptions({
     projectId,
     userId: job.data.userId,
-    explicitModel: inputModel || undefined,
+    modelType: 'llm',
+    modelKey: model,
   })
+  const reasoningEffort = requestedReasoningEffort
+    || (isReasoningEffort(llmCapabilityOptions.reasoningEffort) ? llmCapabilityOptions.reasoningEffort : 'high')
 
   await reportTaskProgress(job, 15, { stage: 'prepare_prompt' })
 
   // 3. 构建 Prompt 变量
-  const artStylePrompt = getArtStylePrompt(novelData.artStyle, locale)
+  const artStylePrompt = getArtStylePrompt(novelData.artStyle, job.data.locale)
   const keySellingPointsStr = (brief.keySellingPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n')
   const referenceStyleLine = brief.referenceStyle ? `参考风格：${brief.referenceStyle}` : ''
   const sloganLine = brief.slogan ? `品牌口号：${brief.slogan}` : ''
 
-  const promptTemplate = await getPromptTemplate(PROMPT_IDS.AD_BRIEF_TO_SCRIPT, locale)
-
-  const promptText = buildPrompt(promptTemplate, {
-    brand_name: brief.brandName,
-    product_name: brief.productName,
-    key_selling_points: keySellingPointsStr,
-    target_audience: brief.targetAudience,
-    emotion_tone: emotionToneToZh(brief.emotionTone),
-    duration_sec: String(brief.durationSec || novelData.adDurationSec || 30),
-    ad_type: adTypeToZh(brief.adType),
-    art_style: artStylePrompt || novelData.artStyle,
-    reference_style: referenceStyleLine,
-    slogan: sloganLine,
+  const promptText = buildPrompt({
+    promptId: PROMPT_IDS.AD_BRIEF_TO_SCRIPT,
+    locale: job.data.locale,
+    variables: {
+      brand_name: brief.brandName,
+      product_name: brief.productName,
+      key_selling_points: keySellingPointsStr,
+      target_audience: brief.targetAudience,
+      emotion_tone: emotionToneToZh(brief.emotionTone),
+      duration_sec: String(brief.durationSec || novelData.adDurationSec || 30),
+      ad_type: adTypeToZh(brief.adType),
+      art_style: artStylePrompt || novelData.artStyle,
+      reference_style: referenceStyleLine,
+      slogan: sloganLine,
+    },
   })
 
   await reportTaskProgress(job, 25, { stage: 'generating_script' })
@@ -150,24 +168,34 @@ export async function handleAdBriefToScriptTask(job: Job<TaskJobData>) {
   const streamContext = createWorkerLLMStreamContext(job, 'ad_brief_to_script')
   const streamCallbacks = createWorkerLLMStreamCallbacks(job, streamContext)
 
-  const genOptions = await resolveProjectModelCapabilityGenerationOptions({
-    projectId,
-    userId: job.data.userId,
-    capabilityKey: 'analysis',
-  })
-
   let outputText = ''
 
   await withInternalLLMStreamCallbacks(streamCallbacks, async () => {
     const result = await executeAiTextStep({
-      modelKey: model,
-      systemPrompt: promptText,
-      userPrompt: `请根据以上Brief生成${brief.durationSec || 30}秒广告脚本，严格输出JSON格式。`,
       userId: job.data.userId,
-      ...genOptions,
+      model,
+      messages: [
+        { role: 'system', content: promptText },
+        {
+          role: 'user',
+          content: `请根据以上Brief生成${brief.durationSec || 30}秒广告脚本，严格输出JSON格式。`,
+        },
+      ],
+      projectId,
+      action: 'ad_brief_to_script',
+      meta: {
+        stepId: 'ad_brief_to_script',
+        stepTitle: 'Brief → 广告脚本',
+        stepIndex: 1,
+        stepTotal: 1,
+      },
+      temperature,
+      reasoning,
+      reasoningEffort,
     })
-    outputText = typeof result === 'string' ? result : ''
+    outputText = result.text
   })
+  await streamCallbacks.flush()
 
   await reportTaskProgress(job, 75, { stage: 'parse_script' })
 
