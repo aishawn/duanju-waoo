@@ -482,10 +482,10 @@ export function VideoEditorStage({
                                                 style={{
                                                     padding: '3px 10px', fontSize: '11px', borderRadius: '4px',
                                                     border: 'none', cursor: 'pointer',
-                                                    background: selectedClip.attachment.subtitle.style === style
+                                                    background: selectedClip.attachment?.subtitle?.style === style
                                                         ? 'var(--glass-accent-from)'
                                                         : 'var(--glass-bg-muted)',
-                                                    color: selectedClip.attachment.subtitle.style === style
+                                                    color: selectedClip.attachment?.subtitle?.style === style
                                                         ? 'var(--glass-text-on-accent)'
                                                         : 'var(--glass-text-secondary)'
                                                 }}
