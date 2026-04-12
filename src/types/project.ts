@@ -134,7 +134,41 @@ export interface AssetLibraryLocation {
 // ============================================
 
 // 工作流模式
-export type WorkflowMode = 'srt' | 'agent'
+export type WorkflowMode = 'srt' | 'agent' | 'ad_film'
+
+// ============================================
+// 广告/TVC模式专用类型
+// ============================================
+
+/** 广告情绪基调 */
+export type AdEmotionTone =
+  | 'energetic'   // 高能运动
+  | 'warm'        // 温情暖色
+  | 'tech'        // 科技冷静
+  | 'elegant'     // 高端优雅
+  | 'joyful'      // 欢乐轻松
+  | 'inspiring'   // 励志感动
+
+/** 广告类型 */
+export type AdType =
+  | 'tvc'           // 品牌TVC
+  | 'social_media'  // 社交媒体广告
+  | 'product_demo'  // 产品演示
+  | 'brand_story'   // 品牌故事片
+
+/** 广告Brief结构体（存储在 adBriefData JSON字段） */
+export interface AdBrief {
+  brandName: string           // 品牌名称
+  productName: string         // 产品/服务名称
+  keySellingPoints: string[]  // 核心卖点（建议3-5条）
+  targetAudience: string      // 目标受众描述
+  emotionTone: AdEmotionTone  // 情绪基调
+  durationSec: 15 | 30 | 60  // 广告时长（秒）
+  adType: AdType              // 广告类型
+  referenceStyle?: string     // 参考风格描述（可选，如"苹果极简风"）
+  slogan?: string             // 品牌口号（可选）
+  additionalNotes?: string    // 补充说明（可选）
+}
 
 // Clip类型（兼容SRT和Agent两种模式）
 export interface NovelPromotionClip {
@@ -260,6 +294,10 @@ export interface NovelPromotionProject {
   audioUrl: string | null
   media?: MediaRef | null
   srtContent: string | null
+  // 广告/TVC模式专用字段
+  adBriefData?: string | null   // JSON序列化的AdBrief对象
+  adDurationSec?: number | null // 广告时长（秒）
+  adType?: string | null        // 广告类型
   characters?: Character[]
   locations?: Location[]
   props?: Prop[]

@@ -73,7 +73,7 @@ export const PATCH = apiHandler(async (
   if (isErrorResponse(authResult)) return authResult
 
   const body = await request.json()
-  const { name, description, novelText, audioUrl, srtContent } = body
+  const { name, description, novelText, audioUrl, srtContent, adBriefData } = body
 
   const updateData: Prisma.NovelPromotionEpisodeUncheckedUpdateInput = {}
   if (name !== undefined) updateData.name = name.trim()
@@ -85,6 +85,9 @@ export const PATCH = apiHandler(async (
     updateData.audioMediaId = media?.id || null
   }
   if (srtContent !== undefined) updateData.srtContent = srtContent
+  if (adBriefData !== undefined) {
+    updateData.adBriefData = adBriefData === null ? null : JSON.stringify(adBriefData)
+  }
 
   const episode = await prisma.novelPromotionEpisode.update({
     where: { id: episodeId },

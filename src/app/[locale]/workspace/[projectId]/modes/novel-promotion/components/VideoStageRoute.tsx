@@ -1,15 +1,23 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import VideoStage from './VideoStage'
 import { useWorkspaceStageRuntime } from '../WorkspaceStageRuntimeContext'
 import { useWorkspaceEpisodeStageData } from '../hooks/useWorkspaceEpisodeStageData'
 import type { Clip as VideoClip } from './video'
 import { useWorkspaceProvider } from '../WorkspaceProvider'
+import { VideoEditorStage, createProjectFromPanels } from '@/features/video-editor'
+import type { VideoEditorProject } from '@/features/video-editor'
 
 export default function VideoStageRoute() {
   const runtime = useWorkspaceStageRuntime()
   const { projectId, episodeId } = useWorkspaceProvider()
   const { clips, storyboards } = useWorkspaceEpisodeStageData()
+
+  // 编辑器模式：是否全屏显示剪辑编辑器
+  const [editorMode, setEditorMode] = useState(false)
+  const [initialEditorProject, setInitialEditorProject] = useState<VideoEditorProject | undefined>()
+
   const normalizedClips: VideoClip[] = clips.map((clip) => ({
     id: clip.id,
     start: clip.start ?? 0,
@@ -17,7 +25,54 @@ export default function VideoStageRoute() {
     summary: clip.summary,
   }))
 
+  // 进入编辑器：从已生成的视频面板自动构建初始项目
+  const handleEnterEditor = useCallback(() => {
+    if (!episodeId) return
+
+    // 汇总所有有视频URL的面板
+    const allPanels = storyboards.flatMap((sb) =>
+      (sb.panels || []).map((panel) => ({
+        id: panel.id,
+        panelIndex: panel.panelIndex ?? 0,
+        storyboardId: sb.id,
+        videoUrl: panel.videoUrl ?? undefined,
+        description: panel.description ?? undefined,
+        duration: panel.duration ?? undefined,
+      }))
+    )
+
+    const editorProject = createProjectFromPanels(episodeId, allPanels)
+    setInitialEditorProject(editorProject)
+    setEditorMode(true)
+  }, [episodeId, storyboards])
+
+  const handleExitEditor = useCallback(() => {
+    setEditorMode(false)
+    setInitialEditorProject(undefined)
+  }, [])
+
   if (!episodeId) return null
+
+  // 剪辑编辑器全屏覆盖层
+  if (editorMode) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 50,
+          background: 'var(--glass-bg-canvas)',
+        }}
+      >
+        <VideoEditorStage
+          projectId={projectId}
+          episodeId={episodeId}
+          initialProject={initialEditorProject}
+          onBack={handleExitEditor}
+        />
+      </div>
+    )
+  }
 
   return (
     <VideoStage
@@ -39,6 +94,7 @@ export default function VideoStageRoute() {
           ? runtime.onOpenAssetLibraryForCharacter(characterId, false)
           : runtime.onOpenAssetLibrary()
       }
+      onEnterEditor={handleEnterEditor}
     />
   )
 }

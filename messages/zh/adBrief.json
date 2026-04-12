@@ -1,0 +1,80 @@
+{
+  "title": "广告/TVC创作",
+  "subtitle": "填写广告Brief，AI将自动生成完整的广告脚本和分镜",
+  "modeTab": {
+    "novel": "📖 小说/剧本",
+    "adFilm": "🎬 广告/TVC"
+  },
+  "form": {
+    "brandName": "品牌名称",
+    "brandNamePlaceholder": "例如：Nike、苹果、茅台",
+    "productName": "产品/服务",
+    "productNamePlaceholder": "例如：Air Max 2026跑鞋",
+    "keySellingPoints": "核心卖点",
+    "keySellingPointsPlaceholder": "例如：超轻缓震，限量配色",
+    "addSellingPoint": "+ 添加卖点",
+    "maxSellingPoints": "最多添加5个卖点",
+    "targetAudience": "目标受众",
+    "targetAudiencePlaceholder": "例如：25-35岁都市跑步爱好者",
+    "emotionTone": "情绪基调",
+    "adType": "广告类型",
+    "duration": "广告时长",
+    "referenceStyle": "参考风格（可选）",
+    "referenceStylePlaceholder": "例如：苹果极简风、耐克励志风",
+    "slogan": "品牌口号（可选）",
+    "sloganPlaceholder": "例如：Just Do It",
+    "additionalNotes": "补充说明（可选）",
+    "additionalNotesPlaceholder": "其他需要AI注意的内容"
+  },
+  "emotionTone": {
+    "energetic": "⚡ 高能运动",
+    "warm": "🌅 温情暖色",
+    "tech": "🔬 科技冷静",
+    "elegant": "💎 高端优雅",
+    "joyful": "🎉 欢乐轻松",
+    "inspiring": "🚀 励志感动"
+  },
+  "adType": {
+    "tvc": "品牌TVC",
+    "social_media": "社交媒体广告",
+    "product_demo": "产品演示",
+    "brand_story": "品牌故事片"
+  },
+  "duration": {
+    "15": "15秒（短视频）",
+    "30": "30秒（标准TVC）",
+    "60": "60秒（品牌故事）"
+  },
+  "actions": {
+    "generateScript": "🎬 AI生成广告脚本",
+    "generating": "AI创作中...",
+    "saveAndGenerate": "保存并生成脚本",
+    "viewScript": "查看已生成脚本"
+  },
+  "validation": {
+    "brandNameRequired": "请填写品牌名称",
+    "productNameRequired": "请填写产品/服务",
+    "targetAudienceRequired": "请填写目标受众",
+    "sellingPointRequired": "请至少填写一个核心卖点",
+    "emotionToneRequired": "请选择情绪基调",
+    "adTypeRequired": "请选择广告类型"
+  },
+  "tips": {
+    "title": "💡 制作提示",
+    "tip1": "卖点越具体，AI生成的脚本越精准",
+    "tip2": "目标受众描述越详细，情感共鸣越强",
+    "tip3": "生成后可在分镜阶段手动调整每个镜头",
+    "tip4": "支持在资产库中上传产品图，保证产品一致性"
+  },
+  "scriptPreview": {
+    "title": "已生成脚本预览",
+    "shotCount": "共 {count} 个镜头",
+    "regenerate": "重新生成",
+    "continueToStoryboard": "进入分镜编辑 →"
+  },
+  "autosave": {
+    "saving": "保存中...",
+    "saved": "✓ 已自动保存",
+    "error": "保存失败"
+  }
+}

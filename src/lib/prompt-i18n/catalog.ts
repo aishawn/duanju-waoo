@@ -153,4 +153,32 @@ export const PROMPT_CATALOG: Record<PromptId, PromptCatalogEntry> = {
     pathStem: 'novel-promotion/voice_analysis',
     variableKeys: ['input', 'characters_lib_name', 'characters_introduction', 'storyboard_json'],
   },
+  // ===== 广告/TVC模式专用Prompt =====
+  [PROMPT_IDS.AD_BRIEF_TO_SCRIPT]: {
+    pathStem: 'ad-film/brief_to_script',
+    variableKeys: [
+      'brand_name',
+      'product_name',
+      'key_selling_points',
+      'target_audience',
+      'emotion_tone',
+      'duration_sec',
+      'ad_type',
+      'art_style',
+      'reference_style',
+      'slogan',
+    ],
+  },
+  [PROMPT_IDS.AD_SCRIPT_TO_STORYBOARD]: {
+    pathStem: 'ad-film/script_to_storyboard',
+    variableKeys: [
+      'ad_script_json',
+      'brand_name',
+      'product_name',
+      'art_style',
+      'aspect_ratio',
+      'characters_info',
+      'locations_info',
+    ],
+  },
 }

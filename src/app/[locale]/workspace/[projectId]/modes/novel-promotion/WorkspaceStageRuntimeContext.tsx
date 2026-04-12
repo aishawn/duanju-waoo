@@ -56,6 +56,7 @@ export interface WorkspaceStageRuntimeValue {
   ) => Promise<void>
   onUpdatePanelVideoModel: (storyboardId: string, panelIndex: number, model: string) => Promise<void>
   onOpenAssetLibraryForCharacter: (characterId?: string | null, refreshAssets?: boolean) => void
+  onEnterEditor?: () => void
 }
 
 const WorkspaceStageRuntimeContext = createContext<WorkspaceStageRuntimeValue | null>(null)

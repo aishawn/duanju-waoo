@@ -29,6 +29,9 @@ export const PROMPT_IDS = {
   NP_SINGLE_PANEL_IMAGE: 'np_single_panel_image',
   NP_STORYBOARD_EDIT: 'np_storyboard_edit',
   NP_VOICE_ANALYSIS: 'np_voice_analysis',
+  // ===== 广告/TVC模式专用Prompt =====
+  AD_BRIEF_TO_SCRIPT: 'ad_brief_to_script',         // Brief → 广告脚本
+  AD_SCRIPT_TO_STORYBOARD: 'ad_script_to_storyboard', // 广告脚本 → 分镜
 } as const
 
 export type PromptId = (typeof PROMPT_IDS)[keyof typeof PROMPT_IDS]

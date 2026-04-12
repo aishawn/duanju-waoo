@@ -54,6 +54,7 @@ interface UseWorkspaceStageRuntimeParams {
     field?: 'videoPrompt' | 'firstLastFramePrompt',
   ) => Promise<void>
   handleUpdatePanelVideoModel: (storyboardId: string, panelIndex: number, model: string) => Promise<void>
+  onEnterEditor?: () => void
 }
 
 export function useWorkspaceStageRuntime({
@@ -80,6 +81,7 @@ export function useWorkspaceStageRuntime({
   handleGenerateAllVideos,
   handleUpdateVideoPrompt,
   handleUpdatePanelVideoModel,
+  onEnterEditor,
 }: UseWorkspaceStageRuntimeParams) {
   const resolvedUserVideoModels = useMemo(
     () => userVideoModels || [],
@@ -116,6 +118,7 @@ export function useWorkspaceStageRuntime({
     onUpdateVideoPrompt: handleUpdateVideoPrompt,
     onUpdatePanelVideoModel: handleUpdatePanelVideoModel,
     onOpenAssetLibraryForCharacter: (characterId, refreshAssets) => openAssetLibrary(characterId, refreshAssets),
+    onEnterEditor,
   }), [
     artStyle,
     assetsLoading,
@@ -140,5 +143,6 @@ export function useWorkspaceStageRuntime({
     capabilityOverrides,
     videoModel,
     videoRatio,
+    onEnterEditor,
   ])
 }

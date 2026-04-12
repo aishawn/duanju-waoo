@@ -18,17 +18,19 @@ import {
     useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { VideoClip, TimelineState, EditorConfig } from '../../types/editor.types'
+import { VideoClip, TimelineState, EditorConfig, BgmClip } from '../../types/editor.types'
 import { framesToTime } from '../../utils/time-utils'
 
 interface TimelineProps {
     clips: VideoClip[]
+    bgmTrack?: BgmClip[]
     timelineState: TimelineState
     config: EditorConfig
     onReorder: (fromIndex: number, toIndex: number) => void
     onSelectClip: (clipId: string | null) => void
     onZoomChange: (zoom: number) => void
     onSeek?: (frame: number) => void
+    onRemoveBgm?: (bgmId: string) => void
 }
 
 /**
@@ -37,12 +39,14 @@ interface TimelineProps {
  */
 export const Timeline: React.FC<TimelineProps> = ({
     clips,
+    bgmTrack = [],
     timelineState,
     config,
     onReorder,
     onSelectClip,
     onZoomChange,
-    onSeek
+    onSeek,
+    onRemoveBgm,
 }) => {
     const t = useTranslations('video')
     // 计算总时长和播放头位置
@@ -259,7 +263,7 @@ export const Timeline: React.FC<TimelineProps> = ({
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                height: '40px',
+                minHeight: '40px',
                 background: 'var(--glass-bg-surface-strong)',
                 border: '1px solid var(--glass-stroke-base)',
                 borderRadius: '6px',
@@ -273,6 +277,64 @@ export const Timeline: React.FC<TimelineProps> = ({
                 }}>
                     BGM
                 </span>
+                <div style={{ display: 'flex', gap: '4px', flex: 1, overflowX: 'auto' }}>
+                    {bgmTrack.length === 0 ? (
+                        <span style={{ fontSize: '11px', color: 'var(--glass-text-tertiary)' }}>
+                            {t('editor.bgm.trackEmpty')}
+                        </span>
+                    ) : (
+                        bgmTrack.map((bgm) => (
+                            <div
+                                key={bgm.id}
+                                title={`Volume: ${Math.round(bgm.volume * 100)}%  FadeIn: ${bgm.fadeIn ?? 0}f  FadeOut: ${bgm.fadeOut ?? 0}f`}
+                                style={{
+                                    width: `${bgm.durationInFrames * timelineState.zoom * 2}px`,
+                                    minWidth: '60px',
+                                    height: '28px',
+                                    background: 'linear-gradient(90deg, var(--glass-accent-from), var(--glass-accent-to))',
+                                    borderRadius: '4px',
+                                    fontSize: '10px',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '0 6px',
+                                    flexShrink: 0,
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <span style={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    flex: 1,
+                                    marginRight: '4px',
+                                }}>
+                                    ♪ {framesToTime(bgm.durationInFrames, config.fps)}
+                                </span>
+                                {onRemoveBgm && (
+                                    <button
+                                        onClick={() => onRemoveBgm(bgm.id)}
+                                        style={{
+                                            background: 'rgba(0,0,0,0.3)',
+                                            border: 'none',
+                                            color: 'white',
+                                            borderRadius: '3px',
+                                            cursor: 'pointer',
+                                            fontSize: '10px',
+                                            padding: '0 4px',
+                                            lineHeight: '18px',
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     )

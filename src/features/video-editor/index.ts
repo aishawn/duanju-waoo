@@ -36,6 +36,9 @@ export {
 // Components
 export { VideoEditorStage } from './components/VideoEditorStage'
 export { TransitionPicker } from './components/TransitionPicker'
+export { MediaLibraryPanel } from './components/MediaLibraryPanel'
+export type { MediaAsset } from './components/MediaLibraryPanel'
+export { BgmLibraryPicker } from './components/BgmLibraryPicker'
 
 // Hooks
 export { useEditorState } from './hooks/useEditorState'

@@ -152,13 +152,32 @@
     },
     "left": {
       "title": "素材库",
-      "description": "从视频阶段导入的片段将显示在这里"
+      "description": "从视频阶段导入的片段将显示在这里",
+      "filterAll": "全部",
+      "filterUnused": "未添加",
+      "noAssets": "暂无已生成的视频素材",
+      "allAdded": "所有素材已添加到时间轴",
+      "added": "已添加",
+      "addToTimeline": "添加到时间轴",
+      "clipLabel": "片段",
+      "assetCount": "{shown}/{total} 个素材"
     },
     "right": {
       "title": "属性",
       "clipLabel": "片段:",
       "clipFallback": "片段 {index}",
       "durationLabel": "时长:",
+      "trimLabel": "裁剪入出点（帧）",
+      "trimFrom": "入点",
+      "trimTo": "出点",
+      "trimReset": "重置裁剪",
+      "volumeLabel": "配音音量",
+      "subtitleLabel": "字幕文本",
+      "subtitlePlaceholder": "输入字幕内容，留空则不显示...",
+      "subtitleStyle": {
+        "default": "默认",
+        "cinematic": "电影"
+      },
       "transitionLabel": "转场到下一片段",
       "deleteConfirm": "确定删除此片段？",
       "deleteClip": "删除片段",
@@ -173,6 +192,31 @@
       "emptyHint": "从素材库拖拽视频片段到这里",
       "audioTrack": "配音",
       "audioBadge": "配"
+    },
+    "bgm": {
+      "searchPlaceholder": "搜索BGM...",
+      "genreAll": "全部风格",
+      "moodAll": "全部情绪",
+      "loading": "加载中...",
+      "empty": "暂无符合条件的BGM",
+      "trackEmpty": "从左侧BGM库添加背景音乐",
+      "genre": {
+        "energetic": "高能",
+        "warm": "温情",
+        "tech": "科技",
+        "elegant": "优雅",
+        "joyful": "欢乐",
+        "inspiring": "励志",
+        "neutral": "中性"
+      },
+      "mood": {
+        "upbeat": "积极",
+        "calm": "平静",
+        "dramatic": "戏剧",
+        "romantic": "浪漫",
+        "epic": "史诗",
+        "motivational": "励志"
+      }
     },
     "transition": {
       "title": "转场效果",

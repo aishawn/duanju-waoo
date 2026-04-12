@@ -78,6 +78,8 @@ export const TASK_TYPE = {
   ASSET_HUB_AI_MODIFY_LOCATION: 'asset_hub_ai_modify_location',
   ASSET_HUB_AI_MODIFY_PROP: 'asset_hub_ai_modify_prop',
   ASSET_HUB_REFERENCE_TO_CHARACTER: 'asset_hub_reference_to_character',
+  // ===== 广告/TVC模式专用任务 =====
+  AD_BRIEF_TO_SCRIPT: 'ad_brief_to_script',           // Brief → 广告脚本（text队列）
 } as const
 
 export type TaskType = (typeof TASK_TYPE)[keyof typeof TASK_TYPE]

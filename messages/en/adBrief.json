@@ -1,0 +1,80 @@
+{
+  "title": "Ad / TVC Creation",
+  "subtitle": "Fill in the Ad Brief, and AI will automatically generate a complete advertising script and storyboard",
+  "modeTab": {
+    "novel": "📖 Novel / Script",
+    "adFilm": "🎬 Ad / TVC"
+  },
+  "form": {
+    "brandName": "Brand Name",
+    "brandNamePlaceholder": "e.g. Nike, Apple, Tesla",
+    "productName": "Product / Service",
+    "productNamePlaceholder": "e.g. Air Max 2026 Running Shoes",
+    "keySellingPoints": "Key Selling Points",
+    "keySellingPointsPlaceholder": "e.g. Ultra-light cushioning, Limited edition colorway",
+    "addSellingPoint": "+ Add Selling Point",
+    "maxSellingPoints": "Maximum 5 selling points",
+    "targetAudience": "Target Audience",
+    "targetAudiencePlaceholder": "e.g. Urban runners aged 25-35",
+    "emotionTone": "Emotional Tone",
+    "adType": "Ad Type",
+    "duration": "Ad Duration",
+    "referenceStyle": "Reference Style (optional)",
+    "referenceStylePlaceholder": "e.g. Apple minimalist, Nike inspirational",
+    "slogan": "Brand Slogan (optional)",
+    "sloganPlaceholder": "e.g. Just Do It",
+    "additionalNotes": "Additional Notes (optional)",
+    "additionalNotesPlaceholder": "Other details for AI to consider"
+  },
+  "emotionTone": {
+    "energetic": "⚡ High Energy",
+    "warm": "🌅 Warm & Heartfelt",
+    "tech": "🔬 Tech & Rational",
+    "elegant": "💎 Luxury & Elegant",
+    "joyful": "🎉 Joyful & Fun",
+    "inspiring": "🚀 Inspiring"
+  },
+  "adType": {
+    "tvc": "Brand TVC",
+    "social_media": "Social Media Ad",
+    "product_demo": "Product Demo",
+    "brand_story": "Brand Story Film"
+  },
+  "duration": {
+    "15": "15s (Short-form)",
+    "30": "30s (Standard TVC)",
+    "60": "60s (Brand Story)"
+  },
+  "actions": {
+    "generateScript": "🎬 AI Generate Ad Script",
+    "generating": "AI Creating...",
+    "saveAndGenerate": "Save & Generate Script",
+    "viewScript": "View Generated Script"
+  },
+  "validation": {
+    "brandNameRequired": "Please enter brand name",
+    "productNameRequired": "Please enter product/service",
+    "targetAudienceRequired": "Please describe target audience",
+    "sellingPointRequired": "Please add at least one selling point",
+    "emotionToneRequired": "Please select emotional tone",
+    "adTypeRequired": "Please select ad type"
+  },
+  "tips": {
+    "title": "💡 Production Tips",
+    "tip1": "More specific selling points = more precise AI scripts",
+    "tip2": "Detailed audience description = stronger emotional resonance",
+    "tip3": "After generation, you can adjust each shot in the storyboard stage",
+    "tip4": "Upload product images in the Asset Hub to maintain product consistency"
+  },
+  "scriptPreview": {
+    "title": "Generated Script Preview",
+    "shotCount": "{count} shots total",
+    "regenerate": "Regenerate",
+    "continueToStoryboard": "Go to Storyboard →"
+  },
+  "autosave": {
+    "saving": "Saving...",
+    "saved": "✓ Draft saved",
+    "error": "Save failed"
+  }
+}

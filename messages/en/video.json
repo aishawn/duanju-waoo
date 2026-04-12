@@ -152,13 +152,32 @@
     },
     "left": {
       "title": "Media Library",
-      "description": "Clips imported from the video stage will appear here"
+      "description": "Clips imported from the video stage will appear here",
+      "filterAll": "All",
+      "filterUnused": "Unused",
+      "noAssets": "No generated video clips yet",
+      "allAdded": "All clips are on the timeline",
+      "added": "Added",
+      "addToTimeline": "Add to timeline",
+      "clipLabel": "Clip",
+      "assetCount": "{shown}/{total} clips"
     },
     "right": {
       "title": "Properties",
       "clipLabel": "Clip:",
       "clipFallback": "Clip {index}",
       "durationLabel": "Duration:",
+      "trimLabel": "Trim In/Out (frames)",
+      "trimFrom": "In",
+      "trimTo": "Out",
+      "trimReset": "Reset Trim",
+      "volumeLabel": "Voice Volume",
+      "subtitleLabel": "Subtitle Text",
+      "subtitlePlaceholder": "Enter subtitle text, leave empty to hide...",
+      "subtitleStyle": {
+        "default": "Default",
+        "cinematic": "Cinematic"
+      },
       "transitionLabel": "Transition to Next Clip",
       "deleteConfirm": "Delete this clip?",
       "deleteClip": "Delete Clip",
@@ -173,6 +192,31 @@
       "emptyHint": "Drag video clips from media library to here",
       "audioTrack": "Voice",
       "audioBadge": "A"
+    },
+    "bgm": {
+      "searchPlaceholder": "Search BGM...",
+      "genreAll": "All Genres",
+      "moodAll": "All Moods",
+      "loading": "Loading...",
+      "empty": "No BGM tracks found",
+      "trackEmpty": "Add BGM from the library on the left",
+      "genre": {
+        "energetic": "Energetic",
+        "warm": "Warm",
+        "tech": "Tech",
+        "elegant": "Elegant",
+        "joyful": "Joyful",
+        "inspiring": "Inspiring",
+        "neutral": "Neutral"
+      },
+      "mood": {
+        "upbeat": "Upbeat",
+        "calm": "Calm",
+        "dramatic": "Dramatic",
+        "romantic": "Romantic",
+        "epic": "Epic",
+        "motivational": "Motivational"
+      }
     },
     "transition": {
       "title": "Transition",

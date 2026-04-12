@@ -1,25 +1,43 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import NovelInputStage from './NovelInputStage'
 import SmartImportWizard from './SmartImportWizard'
+import AdBriefStage from './AdBriefStage'
 import { useWorkspaceStageRuntime } from '../WorkspaceStageRuntimeContext'
 import { useWorkspaceEpisodeStageData } from '../hooks/useWorkspaceEpisodeStageData'
+import { useWorkspaceProvider } from '../WorkspaceProvider'
+import { useEpisodeData } from '@/lib/query/hooks'
 import type { SplitEpisode } from './smart-import/types'
+import type { AdBrief } from '@/types/project'
 
 /**
- * 配置阶段 — 整合 NovelInputStage + 长文本智能分集
- * 
- * 当用户输入长文本（>1000字）并点击"开始创作"时，
- * 弹出引导卡片建议使用智能分集。
- * 选择"智能分集"后，直接进入 SmartImportWizard 的分析流程。
+ * 配置阶段 — 整合 NovelInputStage + 长文本智能分集 + 广告Brief输入
+ *
+ * 顶部 Tab 切换「小说/剧本」和「广告/TVC」两种创作模式：
+ * - 小说/剧本：原有 NovelInputStage + SmartImportWizard 流程
+ * - 广告/TVC：AdBriefStage（结构化Brief → AI生成广告脚本）
  */
 export default function ConfigStage() {
   const runtime = useWorkspaceStageRuntime()
   const { episodeName, novelText } = useWorkspaceEpisodeStageData()
   const params = useParams<{ projectId: string }>()
   const projectId = params?.projectId ?? ''
+  const { episodeId } = useWorkspaceProvider()
+  const { data: episodeData } = useEpisodeData(projectId, episodeId || null)
+  const t = useTranslations('adBrief')
+
+  // 创作模式切换
+  const [mode, setMode] = useState<'novel' | 'adFilm'>('novel')
+
+  // 从 episode 数据中提取已保存的 adBriefData 草稿
+  const initialBrief = useMemo<Partial<AdBrief> | undefined>(() => {
+    const raw = (episodeData as Record<string, unknown> | null)?.adBriefData
+    if (!raw || typeof raw !== 'string') return undefined
+    try { return JSON.parse(raw) as Partial<AdBrief> } catch { return undefined }
+  }, [episodeData])
 
   // 智能分集模式
   const [smartSplitMode, setSmartSplitMode] = useState(false)
@@ -31,8 +49,6 @@ export default function ConfigStage() {
   }, [])
 
   const handleSmartSplitComplete = useCallback((episodes: SplitEpisode[], triggerGlobalAnalysis?: boolean) => {
-    // 分集完成后，刷新页面以加载新的剧集数据
-    // 通过 window.location.reload 简单处理，因为分集会重新创建所有剧集
     void episodes
     void triggerGlobalAnalysis
     window.location.reload()
@@ -51,18 +67,66 @@ export default function ConfigStage() {
   }
 
   return (
-    <NovelInputStage
-      novelText={novelText}
-      episodeName={episodeName}
-      onNovelTextChange={runtime.onNovelTextChange}
-      isSubmittingTask={runtime.isSubmittingTTS || runtime.isStartingStoryToScript}
-      isSwitchingStage={runtime.isTransitioning}
-      videoRatio={runtime.videoRatio ?? undefined}
-      artStyle={runtime.artStyle ?? undefined}
-      onVideoRatioChange={runtime.onVideoRatioChange}
-      onArtStyleChange={runtime.onArtStyleChange}
-      onNext={runtime.onRunStoryToScript}
-      onSmartSplit={handleSmartSplit}
-    />
+    <div className="flex flex-col gap-0">
+      {/* 模式切换 Tab */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        marginBottom: '0',
+        paddingLeft: '24px',
+        paddingTop: '8px',
+      }}>
+        {([
+          { key: 'novel', label: t('modeTab.novel') },
+          { key: 'adFilm', label: t('modeTab.adFilm') },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setMode(key)}
+            style={{
+              padding: '8px 20px',
+              fontSize: '13px',
+              fontWeight: mode === key ? 600 : 400,
+              border: 'none',
+              borderBottom: mode === key
+                ? '2px solid rgba(99,102,241,0.8)'
+                : '2px solid transparent',
+              background: 'transparent',
+              color: mode === key ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              marginBottom: '-1px',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 内容区 */}
+      {mode === 'novel' ? (
+        <NovelInputStage
+          novelText={novelText}
+          episodeName={episodeName}
+          onNovelTextChange={runtime.onNovelTextChange}
+          isSubmittingTask={runtime.isSubmittingTTS || runtime.isStartingStoryToScript}
+          isSwitchingStage={runtime.isTransitioning}
+          videoRatio={runtime.videoRatio ?? undefined}
+          artStyle={runtime.artStyle ?? undefined}
+          onVideoRatioChange={runtime.onVideoRatioChange}
+          onArtStyleChange={runtime.onArtStyleChange}
+          onNext={runtime.onRunStoryToScript}
+          onSmartSplit={handleSmartSplit}
+        />
+      ) : (
+        episodeId && (
+          <AdBriefStage
+            projectId={projectId}
+            episodeId={episodeId}
+            initialBrief={initialBrief}
+          />
+        )
+      )}
+    </div>
   )
 }

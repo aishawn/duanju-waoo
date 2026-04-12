@@ -265,6 +265,10 @@ model NovelPromotionProject {
   lastEpisodeId   String?
   imageResolution String                    @default("2K")
   importStatus    String?
+  // ===== 广告/TVC模式专用字段 =====
+  adBriefData     String?                   @db.Text // JSON: AdBrief结构体 (品牌名/产品/卖点/受众/情绪/时长)
+  adDurationSec   Int?                               // 广告时长(秒): 15/30/60
+  adType          String?                            // 广告类型: tvc/social_media/product_demo/brand_story
   characters      NovelPromotionCharacter[]
   episodes        NovelPromotionEpisode[]
   locations       NovelPromotionLocation[]
@@ -998,4 +1002,24 @@ model LegacyMediaRefBackup {
   @@index([runId])
   @@index([tableName, fieldName])
   @@map("legacy_media_refs_backup")
+}
+
+// ===== BGM音乐库 - 内置免版权音乐素材 =====
+model BgmLibraryTrack {
+  id          String   @id @default(uuid())
+  title       String
+  artist      String?
+  genre       String   // energetic/warm/tech/elegant/joyful/inspiring/neutral
+  mood        String   // upbeat/calm/dramatic/romantic/epic/motivational
+  durationMs  Int
+  storageKey  String   @unique @db.VarChar(512) // MinIO/COS存储Key
+  waveformData String? @db.Text  // JSON: 波形数据（用于时间轴可视化）
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([genre])
+  @@index([mood])
+  @@map("bgm_library_tracks")
 }

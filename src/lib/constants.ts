@@ -162,6 +162,42 @@ export const ART_STYLES = [
     preview: '实',
     promptZh: '真实电影级画面质感，真实现实场景，色彩饱满通透，画面干净精致，真实感',
     promptEn: 'Realistic cinematic look, real-world scene fidelity, rich transparent colors, clean and refined image quality.'
+  },
+  // ===== 广告/TVC专用风格 =====
+  {
+    value: 'minimalist-tech',
+    label: '极简科技',
+    preview: '技',
+    promptZh: '极简主义商业摄影风格，纯净白色或渐变背景，精准硬光，产品质感突出，Apple广告级别画质，细节锐利，超高清商业摄影',
+    promptEn: 'Minimalist commercial photography, pure white or gradient background, precise hard light, Apple-ad-quality, ultra-sharp product details'
+  },
+  {
+    value: 'warm-lifestyle',
+    label: '暖色生活',
+    preview: '暖',
+    promptZh: '温暖生活方式广告摄影，自然柔和光线，暖橙色调，真实生活场景，情感共鸣，胶片质感，画面温馨自然',
+    promptEn: 'Warm lifestyle commercial photography, soft natural light, warm orange tones, authentic real-life scenes, emotional resonance, film grain'
+  },
+  {
+    value: 'luxury-elegant',
+    label: '高端奢华',
+    preview: '奢',
+    promptZh: '奢侈品广告级别质感，深色调黑金配色，精致环境光与高光，品牌质感强烈，电影级构图，奢华材质细节，VOGUE时尚大片风格',
+    promptEn: 'Luxury brand aesthetic, dark black-gold palette, refined ambient lighting with specular highlights, cinematic composition, Vogue editorial style'
+  },
+  {
+    value: 'chinese-aesthetic',
+    label: '国潮东方',
+    preview: '潮',
+    promptZh: '国潮东方美学，中国传统文化元素与现代设计融合，色彩浓郁饱满，意境深远，水墨与现代感结合，中国风商业广告',
+    promptEn: 'Chinese trendy aesthetic, fusion of traditional culture and modern design, rich saturated colors, ink-wash meets contemporary commercial style'
+  },
+  {
+    value: 'high-energy-sport',
+    label: '高能运动',
+    preview: '动',
+    promptZh: '运动广告风格，动态模糊与速度感，高对比度饱和色，强烈光影对比，肾上腺素氛围，Nike/Adidas广告质感，运动激情',
+    promptEn: 'Sports commercial style, motion blur, high-contrast saturated colors, dramatic lighting, adrenaline atmosphere, Nike/Adidas ad quality'
   }
 ]
 
