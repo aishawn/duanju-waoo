@@ -51,6 +51,8 @@ export function VideoEditorStage({
         removeClip,
         updateClip,
         reorderClips,
+        addBgm,
+        removeBgm,
         play,
         pause,
         seek,
