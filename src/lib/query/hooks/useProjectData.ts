@@ -58,6 +58,8 @@ export interface Episode {
     audioUrl?: string | null
     media?: MediaRef | null
     srtContent?: string | null
+    /** JSON serialized AdBrief (novel-promotion ad/TVC mode) */
+    adBriefData?: string | null
     createdAt: string
     // 剧集详情数据
     voiceLines?: VoiceLine[]

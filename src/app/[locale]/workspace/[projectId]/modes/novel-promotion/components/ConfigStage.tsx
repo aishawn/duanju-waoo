@@ -34,7 +34,7 @@ export default function ConfigStage() {
 
   // 从 episode 数据中提取已保存的 adBriefData 草稿
   const initialBrief = useMemo<Partial<AdBrief> | undefined>(() => {
-    const raw = (episodeData as Record<string, unknown> | null)?.adBriefData
+    const raw = episodeData?.adBriefData
     if (!raw || typeof raw !== 'string') return undefined
     try { return JSON.parse(raw) as Partial<AdBrief> } catch { return undefined }
   }, [episodeData])
