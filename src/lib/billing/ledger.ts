@@ -1,5 +1,5 @@
 import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { recordUsageCostOnly, buildBillingMeta } from './reporting'
 import type { ApiType, UsageUnit } from './cost'

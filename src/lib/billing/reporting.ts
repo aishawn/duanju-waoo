@@ -1,5 +1,5 @@
 import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core'
-import type { Prisma } from '@prisma/client'
+import type { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import type { ApiType, UsageUnit } from './cost'
 import { BillingOperationError } from './errors'

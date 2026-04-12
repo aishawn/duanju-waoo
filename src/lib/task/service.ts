@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { withPrismaRetry } from '@/lib/prisma-retry'
 import { rollbackTaskBilling } from '@/lib/billing'

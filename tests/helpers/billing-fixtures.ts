@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { TaskBillingInfo, TaskType } from '@/lib/task/types'
 import { TASK_STATUS } from '@/lib/task/types'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma'
 import { prisma } from './prisma'
 
 export async function createTestUser() {

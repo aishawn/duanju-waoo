@@ -290,9 +290,9 @@ function validateCapabilities(modelType, capabilities) {
 async function main() {
   let PrismaClient
   try {
-    ({ PrismaClient } = await import('@prisma/client'))
+    ({ PrismaClient } = await import('../src/generated/prisma/index.js'))
   } catch {
-    throw new Error('MISSING_DEPENDENCY: @prisma/client is not installed, run npm install first')
+    throw new Error('MISSING_DEPENDENCY: Prisma client not generated, run pnpm prisma generate first')
   }
 
   prisma = new PrismaClient()

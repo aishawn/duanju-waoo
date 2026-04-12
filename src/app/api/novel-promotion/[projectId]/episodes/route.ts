@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { requireProjectAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'

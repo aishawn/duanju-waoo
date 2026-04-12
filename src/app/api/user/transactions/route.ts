@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { BILLING_CURRENCY } from '@/lib/billing/currency'
 import { requireUserAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler } from '@/lib/api-errors'
-import type { Prisma } from '@prisma/client'
+import type { Prisma } from '@/generated/prisma'
 import { toMoneyNumber } from '@/lib/billing/money'
 
 // action key 的特征：小写字母、数字、下划线组成

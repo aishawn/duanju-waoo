@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUserAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'
-import { getSignedUrl } from '@/lib/storage/signed-urls'
+import { keyToSignedUrl } from '@/lib/storage/signed-urls'
 
 /**
  * GET /api/bgm-library
@@ -44,26 +44,16 @@ export const GET = apiHandler(async (request: NextRequest) => {
   })
 
   // 为每条曲目生成签名播放URL（有效期1小时）
-  const tracksWithUrl = await Promise.all(
-    tracks.map(async (track) => {
-      let playUrl: string | null = null
-      try {
-        playUrl = await getSignedUrl(track.storageKey, 3600)
-      } catch {
-        // 静默失败，客户端会显示无法播放
-      }
-      return {
-        id: track.id,
-        title: track.title,
-        artist: track.artist,
-        genre: track.genre,
-        mood: track.mood,
-        durationMs: track.durationMs,
-        waveformData: track.waveformData ? JSON.parse(track.waveformData) : null,
-        playUrl,
-      }
-    })
-  )
+  const tracksWithUrl = tracks.map((track) => ({
+    id: track.id,
+    title: track.title,
+    artist: track.artist,
+    genre: track.genre,
+    mood: track.mood,
+    durationMs: track.durationMs,
+    waveformData: track.waveformData ? JSON.parse(track.waveformData) : null,
+    playUrl: keyToSignedUrl(track.storageKey, 3600),
+  }))
 
   return NextResponse.json({ tracks: tracksWithUrl })
 })

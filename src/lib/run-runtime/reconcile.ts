@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { TASK_STATUS } from '@/lib/task/types'
 import { RUN_STATUS, RUN_STEP_STATUS } from './types'

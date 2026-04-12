@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma/index.js';
 const p = new PrismaClient();
 setTimeout(() => { console.error('TIMEOUT'); process.exit(1); }, 15000);
 
