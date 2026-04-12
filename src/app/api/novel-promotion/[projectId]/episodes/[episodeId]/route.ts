@@ -58,8 +58,11 @@ export const GET = apiHandler(async (
 
   // 转换为稳定媒体 URL（并保留兼容字段）
   const episodeWithSignedUrls = await attachMediaFieldsToProject(episode)
-  const responseData = { ...episodeWithSignedUrls, adBriefData: episode.novelPromotionProject?.adBriefData }
-  delete (responseData as any).novelPromotionProject
+  const { novelPromotionProject, ...episodeRest } = episodeWithSignedUrls
+  const responseData = {
+    ...episodeRest,
+    adBriefData: novelPromotionProject?.adBriefData,
+  }
 
   return NextResponse.json({ episode: responseData })
 })
@@ -91,22 +94,24 @@ export const PATCH = apiHandler(async (
   }
   if (srtContent !== undefined) updateData.srtContent = srtContent
 
-  let episode: any = await prisma.novelPromotionEpisode.update({
+  const updatedEpisode = await prisma.novelPromotionEpisode.update({
     where: { id: episodeId },
-    data: updateData
+    data: updateData,
   })
 
   if (adBriefData !== undefined) {
     const project = await prisma.novelPromotionProject.update({
       where: { projectId },
       data: {
-        adBriefData: adBriefData === null ? null : JSON.stringify(adBriefData)
-      }
+        adBriefData: adBriefData === null ? null : JSON.stringify(adBriefData),
+      },
     })
-    episode = { ...episode, adBriefData: project.adBriefData }
+    return NextResponse.json({
+      episode: { ...updatedEpisode, adBriefData: project.adBriefData },
+    })
   }
 
-  return NextResponse.json({ episode })
+  return NextResponse.json({ episode: updatedEpisode })
 })
 
 /**

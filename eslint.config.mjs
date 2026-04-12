@@ -10,7 +10,7 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  // Global ignores must come first so generated/vendor output is never linted.
   {
     ignores: [
       "node_modules/**",
@@ -20,8 +20,11 @@ const eslintConfig = [
       "build/**",
       "coverage/**",
       "next-env.d.ts",
+      // Prisma emits require(), `any`, and patterns ESLint flags; do not lint generated output.
+      "src/generated/**",
     ],
   },
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/components/ui/icons/**"],
