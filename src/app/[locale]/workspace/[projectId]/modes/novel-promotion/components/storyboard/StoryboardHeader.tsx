@@ -15,6 +15,7 @@ interface StoryboardHeaderProps {
   onDownloadAllImages: () => void
   onGenerateAllPanels: () => void
   onBack: () => void
+  onOpenShotlistImport?: () => void
 }
 
 export default function StoryboardHeader({
@@ -26,9 +27,11 @@ export default function StoryboardHeader({
   isBatchSubmitting,
   onDownloadAllImages,
   onGenerateAllPanels,
-  onBack
+  onBack,
+  onOpenShotlistImport,
 }: StoryboardHeaderProps) {
   const t = useTranslations('storyboard')
+  const tImport = useTranslations('storyboard.shotlistImport')
   const storyboardTaskRunningState = runningCount > 0
     ? resolveTaskPresentationState({
       phase: 'processing',
@@ -82,6 +85,12 @@ export default function StoryboardHeader({
         >
           {isDownloadingImages ? t('header.downloading') : t('header.downloadAll')}
         </GlassButton>
+
+        {onOpenShotlistImport ? (
+          <GlassButton variant="secondary" onClick={onOpenShotlistImport}>
+            {tImport('openButton')}
+          </GlassButton>
+        ) : null}
 
         <GlassButton variant="ghost" onClick={onBack}>{t('header.back')}</GlassButton>
       </div>

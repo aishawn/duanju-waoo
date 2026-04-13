@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import VideoStage from './VideoStage'
 import { useWorkspaceStageRuntime } from '../WorkspaceStageRuntimeContext'
 import { useWorkspaceEpisodeStageData } from '../hooks/useWorkspaceEpisodeStageData'
@@ -9,8 +9,14 @@ import { useWorkspaceProvider } from '../WorkspaceProvider'
 import { VideoEditorStage, createProjectFromPanels } from '@/features/video-editor'
 import type { VideoEditorProject } from '@/features/video-editor'
 
-export default function VideoStageRoute() {
+interface VideoStageRouteProps {
+  /** URL 阶段为 editor 时自动全屏打开剪辑器（需 NEXT_PUBLIC_AI_CLIP_EDITOR_ENABLED=true） */
+  startInEditorMode?: boolean
+}
+
+export default function VideoStageRoute({ startInEditorMode = false }: VideoStageRouteProps) {
   const runtime = useWorkspaceStageRuntime()
+  const { onStageChange } = runtime
   const { projectId, episodeId } = useWorkspaceProvider()
   const { clips, storyboards } = useWorkspaceEpisodeStageData()
 
@@ -46,10 +52,18 @@ export default function VideoStageRoute() {
     setEditorMode(true)
   }, [episodeId, storyboards])
 
+  useEffect(() => {
+    if (!startInEditorMode) return
+    handleEnterEditor()
+  }, [startInEditorMode, handleEnterEditor])
+
   const handleExitEditor = useCallback(() => {
     setEditorMode(false)
     setInitialEditorProject(undefined)
-  }, [])
+    if (startInEditorMode) {
+      onStageChange('videos')
+    }
+  }, [startInEditorMode, onStageChange])
 
   if (!episodeId) return null
 

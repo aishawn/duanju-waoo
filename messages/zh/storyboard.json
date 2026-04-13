@@ -386,5 +386,26 @@
     "firstLastFrame": {
         "placeholder": "输入首尾帧视频提示词...",
         "modelTitle": "首尾帧模型"
+    },
+    "shotlistImport": {
+        "openButton": "粘贴导入",
+        "title": "粘贴导入分镜与口播",
+        "close": "关闭",
+        "hint": "可粘贴 Markdown 分镜表、JSON，或任意杂乱文本。先点「解析预览」（本地规则）或「AI 结构化」（模型理解格式）；确认后再导入。镜头追加到所选分镜组末尾并创建绑定台词。",
+        "noStoryboard": "当前剧集没有分镜组，请先创建分镜。",
+        "targetGroup": "导入到分镜组",
+        "speaker": "发言人（台词）",
+        "pasteLabel": "分镜表或 JSON",
+        "pastePlaceholder": "Markdown 表格，或 JSON：{\"speaker\":\"旁白\",\"novelText\":\"...\",\"shots\":[{\"durationSec\":7,\"narration\":\"...\",\"description\":\"...\"}]}",
+        "parse": "解析预览",
+        "llmParse": "AI 结构化",
+        "llmFailed": "AI 结构化失败，请检查材料或重试",
+        "preview": "已解析 {count} 条镜头，确认后点击下方导入。",
+        "novelTextLabel": "口播全文（可选）",
+        "novelTextPlaceholder": "写入剧集文稿字段；若 JSON 内已有 novelText 会填入此处。留空则不更新全文。",
+        "cancel": "取消",
+        "import": "导入",
+        "failed": "导入失败",
+        "networkError": "网络错误，请重试"
     }
 }

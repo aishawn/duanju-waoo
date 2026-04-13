@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { NovelPromotionStoryboard, NovelPromotionClip } from '@/types/project'
 import { CharacterPickerModal, LocationPickerModal } from '../PanelEditForm'
 import ImageEditModal from './ImageEditModal'
@@ -10,6 +11,7 @@ import StoryboardToolbar from './StoryboardToolbar'
 import StoryboardCanvas from './StoryboardCanvas'
 import { useStoryboardStageController } from './hooks/useStoryboardStageController'
 import { useStoryboardModalRuntime } from './hooks/useStoryboardModalRuntime'
+import ShotlistImportDialog from './ShotlistImportDialog'
 
 interface StoryboardStageProps {
   projectId: string
@@ -118,6 +120,17 @@ export default function StoryboardStage({
     handleGenerateAllPanels,
   } = controller
 
+  const [shotlistImportOpen, setShotlistImportOpen] = useState(false)
+
+  const shotlistStoryboardOptions = useMemo(
+    () =>
+      sortedStoryboards.map((sb) => ({
+        id: sb.id,
+        label: formatClipTitle(clips.find((c) => c.id === sb.clipId)),
+      })),
+    [sortedStoryboards, clips, formatClipTitle],
+  )
+
   const modalRuntime = useStoryboardModalRuntime({
     projectId,
     videoRatio,
@@ -162,6 +175,7 @@ export default function StoryboardStage({
           onGenerateAllPanels={handleGenerateAllPanels}
           onAddStoryboardGroupAtStart={() => addStoryboardGroup(0)}
           onBack={onBack}
+          onOpenShotlistImport={() => setShotlistImportOpen(true)}
         />
 
         <StoryboardCanvas
@@ -267,6 +281,14 @@ export default function StoryboardStage({
             onClose={modalRuntime.closeAssetPicker}
           />
         )}
+
+        <ShotlistImportDialog
+          isOpen={shotlistImportOpen}
+          onClose={() => setShotlistImportOpen(false)}
+          projectId={projectId}
+          episodeId={episodeId}
+          storyboardOptions={shotlistStoryboardOptions}
+        />
       </StoryboardStageShell>
   )
 }

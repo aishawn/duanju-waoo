@@ -21,7 +21,9 @@ export default function WorkspaceStageContent({
 
       {currentStage === 'storyboard' && <StoryboardStage />}
 
-      {currentStage === 'videos' && <VideoStageRoute />}
+      {(currentStage === 'videos' || currentStage === 'editor') && (
+        <VideoStageRoute startInEditorMode={currentStage === 'editor'} />
+      )}
 
       {currentStage === 'voice' && <VoiceStageRoute />}
     </div>

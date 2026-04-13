@@ -1,6 +1,7 @@
 'use client'
 
 import type { StageArtifactReadiness } from '@/lib/novel-promotion/stage-readiness'
+import { isAiClipEditorNavEnabled } from '@/lib/feature-flags/novel-promotion'
 
 interface CapsuleNavItem {
   id: string
@@ -22,6 +23,8 @@ export function useWorkspaceStageNavigation({
   stageArtifacts,
   t,
 }: UseWorkspaceStageNavigationParams): CapsuleNavItem[] {
+  const aiClipEditorEnabled = isAiClipEditorNavEnabled()
+
   const getStageStatus = (stageId: string): 'empty' | 'active' | 'processing' | 'ready' => {
     if (isAnyOperationRunning) return 'processing'
 
@@ -51,9 +54,9 @@ export function useWorkspaceStageNavigation({
       id: 'editor',
       icon: 'E',
       label: t('stages.editor'),
-      status: 'empty',
-      disabled: true,
-      disabledLabel: t('stages.editorComingSoon'),
+      status: getStageStatus('editor'),
+      disabled: !aiClipEditorEnabled,
+      disabledLabel: aiClipEditorEnabled ? undefined : t('stages.editorComingSoon'),
     },
   ]
 }

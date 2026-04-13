@@ -386,5 +386,26 @@
     "firstLastFrame": {
         "placeholder": "Enter first/last frame video prompt...",
         "modelTitle": "First/Last Frame Model"
+    },
+    "shotlistImport": {
+        "openButton": "Paste import",
+        "title": "Paste storyboard & voiceover",
+        "close": "Close",
+        "hint": "Paste a Markdown table, JSON, or messy free text. Use “Parse preview” (local rules) or “AI structure” (model). Then import. Panels append to the chosen group; voice lines are bound.",
+        "noStoryboard": "No storyboard group in this episode. Create one first.",
+        "targetGroup": "Target group",
+        "speaker": "Speaker (voice lines)",
+        "pasteLabel": "Table or JSON",
+        "pastePlaceholder": "Markdown table, or JSON: {\"speaker\":\"Narrator\",\"novelText\":\"...\",\"shots\":[{\"durationSec\":7,\"narration\":\"...\",\"description\":\"...\"}]}",
+        "parse": "Parse preview",
+        "llmParse": "AI structure",
+        "llmFailed": "AI structuring failed. Check input or retry.",
+        "preview": "Parsed {count} shots. Import when ready.",
+        "novelTextLabel": "Full script (optional)",
+        "novelTextPlaceholder": "Saved to episode novel text. JSON novelText fills here. Leave empty to skip updating.",
+        "cancel": "Cancel",
+        "import": "Import",
+        "failed": "Import failed",
+        "networkError": "Network error. Try again."
     }
 }
