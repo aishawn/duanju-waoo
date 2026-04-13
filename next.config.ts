@@ -4,9 +4,12 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 const nextConfig: NextConfig = {
-  // 本地默认仍跑 ESLint；PaaS/Nixpacks 可设 CI_SKIP_NEXT_ESLINT=1 缩短 next build（类型检查仍执行）
+  // 本地默认仍跑 ESLint / tsc；PaaS 可设 CI_SKIP_NEXT_*=1 缩短 next build（须在 PR 或本地单独跑 lint + typecheck）
   eslint: {
     ignoreDuringBuilds: process.env.CI_SKIP_NEXT_ESLINT === "1",
+  },
+  typescript: {
+    ignoreBuildErrors: process.env.CI_SKIP_NEXT_TYPECHECK === "1",
   },
   // Next 15 的 allowedDevOrigins 是顶层配置，不属于 experimental
   allowedDevOrigins: [

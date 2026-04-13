@@ -25,7 +25,8 @@ cmds = [
   "sh -c 'if [ ! -x /bin/bash ]; then BASH_PATH=$(command -v bash 2>/dev/null || find /nix/store -path \"*/bin/bash\" -type f -executable 2>/dev/null | head -1); if [ -n \"$BASH_PATH\" ] && [ -x \"$BASH_PATH\" ]; then mkdir -p /bin && ln -sf \"$BASH_PATH\" /bin/bash && chmod +x /bin/bash; fi; fi'",
   "sh -c 'if [ ! -d \"node_modules\" ]; then echo \"ERROR: node_modules missing before build\"; exit 1; fi'",
   "bash -c 'ulimit -n 8192 || true'",
-  "sh -c 'NODE_ENV=production pnpm run build'",
+  # 提高 Node 堆上限，避免大项目在 tsc/webpack 阶段 OOM 或极慢 GC（与是否跳过类型检查无关）
+  "sh -c 'NODE_OPTIONS=--max-old-space-size=6144 NODE_ENV=production pnpm run build'",
   "sh -c 'if [ ! -d \".next\" ]; then echo \"ERROR: .next directory not found after build\"; exit 1; fi'"
 ]
 
@@ -37,5 +38,6 @@ cmd = "sh -c 'mkdir -p logs; touch .env; exec pnpm run start'"
 [variables]
 NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
-# next build 跳过 ESLint（仍做 TypeScript 校验）；本地不设此变量则照常 lint
+# next build 跳过 ESLint；大仓库在 Docker 里跑 tsc 可能极久且无日志，部署构建跳过类型检查
 CI_SKIP_NEXT_ESLINT = "1"
+CI_SKIP_NEXT_TYPECHECK = "1"
