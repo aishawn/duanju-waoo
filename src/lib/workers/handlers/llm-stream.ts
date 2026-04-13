@@ -47,12 +47,10 @@ export function createWorkerLLMStreamCallbacks(
   let checkingActive = false
   let lastActiveProbeAt = 0
 
-  const markTerminated = (stage: string) => {
+  const markTerminated = (stage: string, cause?: TaskTerminatedError) => {
     if (terminatedError) return
-    terminatedError = new TaskTerminatedError(
-      job.data.taskId,
-      `Task terminated during ${stage}`,
-    )
+    terminatedError = cause
+      ?? new TaskTerminatedError(job.data.taskId, `Task terminated during ${stage}`)
   }
 
   const ensureActiveOrThrow = (stage: string) => {
@@ -70,7 +68,15 @@ export function createWorkerLLMStreamCallbacks(
 
   const probeActive = async () => {
     if (activeController?.isActive) {
-      return await activeController.isActive()
+      try {
+        return await activeController.isActive()
+      } catch (error) {
+        if (error instanceof TaskTerminatedError) {
+          markTerminated('worker_llm_stream_probe', error)
+          return false
+        }
+        throw error
+      }
     }
     return await isTaskActive(job.data.taskId)
   }
@@ -104,7 +110,7 @@ export function createWorkerLLMStreamCallbacks(
       })
       .catch((error) => {
         if (error instanceof TaskTerminatedError) {
-          markTerminated(stage)
+          markTerminated(stage, error)
           return
         }
         throw error

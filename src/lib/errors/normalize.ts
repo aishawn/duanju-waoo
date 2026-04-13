@@ -1,5 +1,6 @@
 import { InsufficientBalanceError } from '@/lib/billing/errors'
 import { getPrismaErrorCode, isLikelyPrismaDisconnectError, isPrismaRetryableCode } from '@/lib/prisma-error'
+import { TaskTerminatedError } from '@/lib/task/errors'
 import { DEFAULT_ERROR_CODE, getErrorSpec, isKnownErrorCode, resolveUnifiedErrorCode, type UnifiedErrorCode } from './codes'
 import type { ErrorContext, NormalizedError, NormalizedErrorDetails } from './types'
 
@@ -169,6 +170,8 @@ function inferCodeFromMessage(message: string): UnifiedErrorCode | null {
   if (isEmptyResponseMessage(message)) return 'EMPTY_RESPONSE'
   if (isVideoApiFormatUnsupportedMessage(message)) return 'VIDEO_API_FORMAT_UNSUPPORTED'
   if (containsAny(message, ['task cancelled', 'canceled by user', 'cancelled by user', '任务已取消'])) return 'CONFLICT'
+  // Workflow / worker termination (must precede generic "not found" / "terminated"→NETWORK heuristics)
+  if (containsAny(message, ['lease lost', 'run terminated during', 'task terminated during'])) return 'CONFLICT'
   if (containsAny(message, ['unauthorized', 'not authenticated', 'need login', '401'])) return 'UNAUTHORIZED'
   // AccountOverdueError（ARK 欠费 403）必须在 FORBIDDEN 之前检查
   if (containsAny(message, ['accountoverdueerror', 'overdue balance', 'overdue', 'account has an overdue'])) return 'INSUFFICIENT_BALANCE'
@@ -180,7 +183,9 @@ function inferCodeFromMessage(message: string): UnifiedErrorCode | null {
   if (containsAny(message, ['sensitive', 'unsafe', 'safety', 'blocked', 'prohibited', 'policy_violation', 'moderation', 'harm', '敏感', '违规', '不当', '安全策略', '被过滤']) && !containsAny(message, ['case-sensitive', 'case sensitive'])) return 'SENSITIVE_CONTENT'
   if (containsAny(message, ['timeout', 'timed out', 'deadline exceeded'])) return 'GENERATION_TIMEOUT'
   if (containsAny(message, ['503', 'unavailable', 'overloaded', 'upstream error'])) return 'EXTERNAL_ERROR'
-  if (containsAny(message, ['network', 'fetch failed', 'econnreset', 'enotfound', 'econnrefused', 'eai_again', 'terminated', 'aborted', 'socket hang up'])) return 'NETWORK_ERROR'
+  if (containsAny(message, ['network', 'fetch failed', 'econnreset', 'enotfound', 'econnrefused', 'eai_again', 'aborted', 'socket hang up'])) return 'NETWORK_ERROR'
+  // Standalone "terminated" (e.g. undici TypeError) — avoid matching "Task terminated during …" (handled above)
+  if (containsAny(message, ['terminated'])) return 'NETWORK_ERROR'
   if (containsAny(message, ['conflict', 'already exists', 'duplicate'])) return 'CONFLICT'
   return null
 }
@@ -198,6 +203,10 @@ export function normalizeAnyError(input: unknown, options: NormalizeOptions = {}
   const message = toMessage(errorLike.message ?? input)
   const lowerMessage = toLowerMessage(message)
   const provider = typeof errorLike.provider === 'string' ? errorLike.provider : null
+
+  if (input instanceof TaskTerminatedError) {
+    return buildNormalizedError('CONFLICT', message, options.details, provider)
+  }
 
   if (input instanceof TypeError) {
     if (lowerMessage === 'terminated' || containsAny(lowerMessage, ['aborted', 'socket hang up'])) {

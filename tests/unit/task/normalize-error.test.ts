@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeAnyError } from '@/lib/errors/normalize'
+import { TaskTerminatedError } from '@/lib/task/errors'
 
 describe('normalizeAnyError network termination mapping', () => {
   it('maps undici terminated TypeError to NETWORK_ERROR', () => {
@@ -18,6 +19,20 @@ describe('normalizeAnyError network termination mapping', () => {
     const normalized = normalizeAnyError(new Error('exception TypeError: terminated'))
     expect(normalized.code).toBe('NETWORK_ERROR')
     expect(normalized.retryable).toBe(true)
+  })
+
+  it('maps TaskTerminatedError to CONFLICT (non-retryable), not NETWORK_ERROR', () => {
+    const normalized = normalizeAnyError(
+      new TaskTerminatedError('run-1', 'Run terminated during worker_llm_stream_probe: lease lost'),
+    )
+    expect(normalized.code).toBe('CONFLICT')
+    expect(normalized.retryable).toBe(false)
+  })
+
+  it('maps task-terminated stream probe message to CONFLICT', () => {
+    const normalized = normalizeAnyError(new Error('Task terminated during worker_llm_stream_probe'))
+    expect(normalized.code).toBe('CONFLICT')
+    expect(normalized.retryable).toBe(false)
   })
 })
 

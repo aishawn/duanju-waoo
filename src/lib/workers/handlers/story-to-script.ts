@@ -8,7 +8,6 @@ import {
 import { withInternalLLMStreamCallbacks } from '@/lib/llm-observe/internal-stream-context'
 import { logAIAnalysis } from '@/lib/logging/semantic'
 import { onProjectNameAvailable } from '@/lib/logging/file-writer'
-import { TaskTerminatedError } from '@/lib/task/errors'
 import { reportTaskProgress } from '@/lib/workers/shared'
 import {
   runStoryToScriptOrchestrator,
@@ -165,15 +164,8 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
       await assertRunActive(stage)
     },
     isActive: async () => {
-      try {
-        await assertRunActive('worker_llm_stream_probe')
-        return true
-      } catch (error) {
-        if (error instanceof TaskTerminatedError) {
-          return false
-        }
-        throw error
-      }
+      await assertRunActive('worker_llm_stream_probe')
+      return true
     },
   })
 

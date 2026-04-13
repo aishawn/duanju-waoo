@@ -196,11 +196,10 @@ export function useStoryboardState({
     })
   }
 
-  const sortedStoryboards = [...localStoryboards].sort((a, b) => {
-    const clipIndexA = clips.findIndex(c => c.id === a.clipId)
-    const clipIndexB = clips.findIndex(c => c.id === b.clipId)
-    return clipIndexA - clipIndexB
-  })
+  const sortedStoryboards = useMemo(
+    () => sortStoryboardsByClipOrder(localStoryboards, clips),
+    [localStoryboards, clips],
+  )
 
   const totalPanels = computeTotalPanels(localStoryboards)
   const storyboardStartIndex = computeStoryboardStartIndex(sortedStoryboards)

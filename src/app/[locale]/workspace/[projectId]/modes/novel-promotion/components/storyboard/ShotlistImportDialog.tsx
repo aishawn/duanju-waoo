@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
 import { useQueryClient } from '@tanstack/react-query'
@@ -45,6 +45,7 @@ export default function ShotlistImportDialog({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [llmParsing, setLlmParsing] = useState(false)
+  const wasOpenRef = useRef(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -53,14 +54,26 @@ export default function ShotlistImportDialog({
   }, [isOpen])
 
   useEffect(() => {
-    if (!isOpen) return
-    setParseError(null)
-    setSubmitError(null)
-    setParsed(null)
-    setPaste('')
-    setSpeaker('旁白')
-    setNovelTextExtra('')
-    setStoryboardId(storyboardOptions[0]?.id ?? '')
+    if (!isOpen) {
+      wasOpenRef.current = false
+      return
+    }
+
+    if (!wasOpenRef.current) {
+      wasOpenRef.current = true
+      setParseError(null)
+      setSubmitError(null)
+      setParsed(null)
+      setPaste('')
+      setSpeaker('旁白')
+      setNovelTextExtra('')
+      setStoryboardId(storyboardOptions[0]?.id ?? '')
+      return
+    }
+
+    setStoryboardId((prev) =>
+      storyboardOptions.some((o) => o.id === prev) ? prev : (storyboardOptions[0]?.id ?? ''),
+    )
   }, [isOpen, storyboardOptions])
 
   const handleParse = useCallback(() => {

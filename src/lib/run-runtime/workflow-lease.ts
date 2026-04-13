@@ -2,9 +2,14 @@ import { TaskTerminatedError } from '@/lib/task/errors'
 import { RUN_STATUS } from './types'
 import { claimRunLease, getRunById, releaseRunLease, renewRunLease } from './service'
 
-const DEFAULT_RUN_LEASE_MS = 30_000
+const DEFAULT_RUN_LEASE_MS = 60_000
 
 export function getDefaultRunLeaseMs() {
+  const raw = typeof process.env.WORKFLOW_RUN_LEASE_MS === 'string' ? process.env.WORKFLOW_RUN_LEASE_MS.trim() : ''
+  const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN
+  if (Number.isFinite(parsed) && parsed >= 15_000) {
+    return parsed
+  }
   return DEFAULT_RUN_LEASE_MS
 }
 
@@ -37,7 +42,7 @@ export async function withWorkflowRunLease<T>(params: {
   leaseMs?: number
   run: () => Promise<T>
 }): Promise<{ claimed: boolean; result: T | null }> {
-  const leaseMs = params.leaseMs ?? DEFAULT_RUN_LEASE_MS
+  const leaseMs = params.leaseMs ?? getDefaultRunLeaseMs()
   const claimed = await claimRunLease({
     runId: params.runId,
     userId: params.userId,
@@ -55,7 +60,7 @@ export async function withWorkflowRunLease<T>(params: {
       workerId: params.workerId,
       leaseMs,
     })
-  }, Math.max(5_000, Math.floor(leaseMs / 3)))
+  }, Math.max(5_000, Math.floor(leaseMs / 4)))
 
   try {
     return {

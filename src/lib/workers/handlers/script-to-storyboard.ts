@@ -171,15 +171,8 @@ export async function handleScriptToStoryboardTask(job: Job<TaskJobData>) {
       await assertRunActive(stage)
     },
     isActive: async () => {
-      try {
-        await assertRunActive('worker_llm_stream_probe')
-        return true
-      } catch (error) {
-        if (error instanceof TaskTerminatedError) {
-          return false
-        }
-        throw error
-      }
+      await assertRunActive('worker_llm_stream_probe')
+      return true
     },
   })
 
