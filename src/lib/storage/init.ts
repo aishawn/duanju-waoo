@@ -1,7 +1,17 @@
 import { ensureStorageReady } from '@/lib/storage/bootstrap'
 import { requireEnv } from '@/lib/storage/utils'
 
+function isTruthySkip(value: string | undefined): boolean {
+  const v = (value || '').trim().toLowerCase()
+  return v === '1' || v === 'true' || v === 'yes'
+}
+
 async function main() {
+  if (isTruthySkip(process.env.STORAGE_INIT_SKIP)) {
+    console.warn('[storage:init] skipped (STORAGE_INIT_SKIP is set); bucket is not verified at startup')
+    return
+  }
+
   const result = await ensureStorageReady()
 
   if (result === 'skipped') {

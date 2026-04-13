@@ -9,11 +9,54 @@ export type StorageBootstrapResult = 'skipped' | 'existing' | 'created'
 
 type BucketErrorShape = {
   name?: string
+  message?: string
   code?: string
   Code?: string
   $metadata?: {
     httpStatusCode?: number
+    requestId?: string
   }
+}
+
+function summarizeEndpointForLog(endpoint: string): string {
+  try {
+    const u = new URL(endpoint)
+    return `${u.protocol}//${u.host}`
+  } catch {
+    return '(invalid MINIO_ENDPOINT URL — include https:// or http://)'
+  }
+}
+
+function formatBootstrapFailureHint(params: {
+  endpoint: string
+  region: string
+  bucket: string
+  error: unknown
+}): string {
+  const { endpoint, region, bucket, error } = params
+  const e = error as BucketErrorShape
+  const status = e.$metadata?.httpStatusCode
+  const code = e.code || e.Code || e.name || ''
+  const reqId = e.$metadata?.requestId
+  const base = summarizeEndpointForLog(endpoint)
+  const tail = [
+    `endpoint=${base}`,
+    `region=${region}`,
+    `bucket=${bucket}`,
+    status != null ? `httpStatus=${status}` : null,
+    code ? `code=${code}` : null,
+    reqId ? `requestId=${reqId}` : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const hints = [
+    'Confirm MINIO_ENDPOINT is the S3 API base URL (e.g. https://<id>.r2.cloudflarestorage.com for R2, or your MinIO URL), not a public CDN/custom domain.',
+    'For Cloudflare R2 use MINIO_REGION=auto and MINIO_FORCE_PATH_STYLE=true unless your provider docs say otherwise.',
+    'If the bucket is created in the provider UI and policies are strict, ensure keys can HeadBucket / CreateBucket.',
+  ]
+
+  return `[storage:init] S3 HeadBucket/CreateBucket failed (${tail}). ${hints.join(' ')}`
 }
 
 function isMissingBucketError(error: unknown): boolean {
@@ -55,12 +98,18 @@ export async function ensureMinioBucket(): Promise<Exclude<StorageBootstrapResul
     return 'existing'
   } catch (error: unknown) {
     if (!isMissingBucketError(error)) {
+      console.error(formatBootstrapFailureHint({ endpoint, region, bucket, error }))
       throw error
     }
   }
 
-  await client.send(new CreateBucketCommand({ Bucket: bucket }))
-  return 'created'
+  try {
+    await client.send(new CreateBucketCommand({ Bucket: bucket }))
+    return 'created'
+  } catch (error: unknown) {
+    console.error(formatBootstrapFailureHint({ endpoint, region, bucket, error }))
+    throw error
+  }
 }
 
 export async function ensureStorageReady(options: StorageFactoryOptions = {}): Promise<StorageBootstrapResult> {
