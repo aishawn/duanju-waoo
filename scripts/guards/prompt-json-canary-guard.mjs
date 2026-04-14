@@ -33,6 +33,7 @@ const TEMPLATE_TOKEN_REQUIREMENTS = {
     'location',
     'scene_type',
     'source_text',
+    'duration',
   ],
   'novel-promotion/agent_storyboard_detail': [
     'panel_number',

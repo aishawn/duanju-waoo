@@ -42,20 +42,23 @@ Output format (JSON array only):
     "shot_type": "medium shot",
     "camera_move": "static",
     "video_prompt": "short visual motion prompt",
-    "duration": 3
+    "duration": 5
   }
 ]
 
 Planning rules:
 1. Keep strict chronological order.
-2. Avoid missing key beats from clip_content.
-3. Keep panel transitions smooth and logically continuous.
-4. Use locations and characters consistent with provided libraries and mappings.
-5. Prefer concrete, visible actions over abstract wording.
-6. If location context contains available slots, treat them as preferred placement anchors rather than mandatory hard boundaries.
-7. Prefer assigning a `slot` by copying one full placement phrase from `available_slots` verbatim when a character is stably positioned in the scene.
-8. You may omit `slot` when the shot is mainly about movement, entry/exit, path traversal, transition space, temporary space, empty space, imagination, dream, memory, or abstract/non-literal space.
-9. When no `slot` is used, decide placement freely from source text, action flow, and cinematic staging instead of forcing one of the provided slots.
-10. Do not shorten, rewrite, summarize, or replace a provided slot phrase with a short token such as `slot_1`, `left`, or `throne_front`.
-11. Return strict JSON only.
-12. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+2. Split by narrative beats, not character count: one panel = one clear on-screen beat (an action completes, information lands, or a spoken line finishes). Merge consecutive micro-actions when they belong to the same beat.
+3. Duration: each panel MUST include integer `duration` (seconds). Prefer 3–8s per panel; avoid many 1–2s panels in the same scene.
+4. Dialogue / lip-sync: include at least one close-up or primary shot on the current speaker when they have spoken lines; do not show two characters clearly speaking in the same panel. Listener reaction shots are optional unless the beat needs emphasis—do not cut after every half-sentence.
+5. Avoid missing key beats from clip_content; also avoid redundant panels that repeat the same beat.
+6. Keep panel transitions smooth and logically continuous.
+7. Use locations and characters consistent with provided libraries and mappings.
+8. Prefer concrete, visible actions over abstract wording.
+9. If location context contains available slots, treat them as preferred placement anchors rather than mandatory hard boundaries.
+10. Prefer assigning a `slot` by copying one full placement phrase from `available_slots` verbatim when a character is stably positioned in the scene.
+11. You may omit `slot` when the shot is mainly about movement, entry/exit, path traversal, transition space, temporary space, empty space, imagination, dream, memory, or abstract/non-literal space.
+12. When no `slot` is used, decide placement freely from source text, action flow, and cinematic staging instead of forcing one of the provided slots.
+13. Do not shorten, rewrite, summarize, or replace a provided slot phrase with a short token such as `slot_1`, `left`, or `throne_front`.
+14. Return strict JSON only.
+15. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
