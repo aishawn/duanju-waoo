@@ -37,6 +37,7 @@ Output format (JSON array only):
       { "name": "Character Name", "appearance": "appearance name", "slot": "the position beneath the throne steps at the center of the hall" }
     ],
     "location": "location name",
+    "props": [],
     "scene_type": "daily",
     "source_text": "exact or near-exact source excerpt",
     "shot_type": "medium shot",
@@ -47,6 +48,7 @@ Output format (JSON array only):
 ]
 
 Planning rules:
+0. Each panel MUST include `props`: string array of prop names visible or handled in that shot. Names must exactly match the prop asset library or the `props` list inside Clip metadata JSON; use [] if none.
 1. Keep strict chronological order.
 2. Split by narrative beats, not character count: one panel = one clear on-screen beat (an action completes, information lands, or a spoken line finishes). Merge consecutive micro-actions when they belong to the same beat.
 3. Duration: each panel MUST include integer `duration` (seconds). Prefer 3–8s per panel; avoid many 1–2s panels in the same scene.

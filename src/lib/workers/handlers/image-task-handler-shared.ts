@@ -36,6 +36,8 @@ interface LocationImageLike {
 
 interface LocationLike {
   name: string
+  /** 与 Prisma `novel_promotion_locations.assetKind` 一致；道具为 `prop` */
+  assetKind?: string | null
   images?: LocationImageLike[]
 }
 
@@ -49,6 +51,8 @@ interface PanelLike {
   sketchImageUrl?: string | null
   characters?: string | null
   location?: string | null
+  /** JSON 字符串数组，与分镜 `props` 字段一致 */
+  props?: string | null
 }
 
 export interface PanelCharacterReference {
@@ -222,6 +226,51 @@ export function findCharacterByName<T extends { name: string }>(characters: T[],
   return undefined
 }
 
+function readLocationAssetKind(loc: LocationLike): string {
+  return typeof loc.assetKind === 'string' && loc.assetKind.trim() ? loc.assetKind : 'location'
+}
+
+/**
+ * 角色参考图：优先当前选中槽位，其次 `imageUrl`（与资产卡展示一致），最后首张候选。
+ * 避免仅更新了 `imageUrl` 或手工换图后仍误用 imageUrls[0]旧图。
+ */
+export function pickCharacterAppearanceReferenceKey(appearance: CharacterAppearanceLike): string | null {
+  let imageUrls: string[] = []
+  if (typeof appearance.imageUrls === 'string' && appearance.imageUrls.trim()) {
+    try {
+      imageUrls = parseImageUrls(appearance.imageUrls, 'characterAppearance.imageUrls')
+    } catch {
+      imageUrls = []
+    }
+  }
+  const selectedIndex = appearance.selectedIndex
+  const selectedUrl = selectedIndex !== null && selectedIndex !== undefined ? imageUrls[selectedIndex] : null
+  if (selectedUrl) return selectedUrl
+  if (appearance.imageUrl) return appearance.imageUrl
+  return imageUrls[0] || null
+}
+
+/** 将道具资产（assetKind=prop）的当前选中图加入参考图列表 */
+export function appendPropAssetReferenceUrls(refs: string[], projectData: NovelProjectData, panel: Pick<PanelLike, 'props'>) {
+  const names = parseJsonStringArray(panel.props)
+  const seen = new Set<string>()
+  for (const raw of names) {
+    const propName = typeof raw === 'string' ? raw.trim() : ''
+    if (!propName) continue
+    const key = propName.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    const prop = (projectData.locations || []).find(
+      (loc) => loc.name.toLowerCase() === key && readLocationAssetKind(loc) === 'prop',
+    )
+    if (!prop) continue
+    const images = prop.images || []
+    const selected = images.find((img) => img.isSelected) || images[0]
+    const signed = toSignedUrlIfCos(selected?.imageUrl, 3600)
+    if (signed) refs.push(signed)
+  }
+}
+
 export async function collectPanelReferenceImages(projectData: NovelProjectData, panel: PanelLike) {
   const refs: string[] = []
 
@@ -242,16 +291,15 @@ export async function collectPanelReferenceImages(projectData: NovelProjectData,
 
     if (!appearance) continue
 
-    const imageUrls = parseImageUrls(appearance.imageUrls, 'characterAppearance.imageUrls')
-    const selectedIndex = appearance.selectedIndex
-    const selectedUrl = selectedIndex !== null && selectedIndex !== undefined ? imageUrls[selectedIndex] : null
-    const key = selectedUrl || imageUrls[0] || appearance.imageUrl
+    const key = pickCharacterAppearanceReferenceKey(appearance)
     const signed = toSignedUrlIfCos(key, 3600)
     if (signed) refs.push(signed)
   }
 
   if (panel.location) {
-    const location = (projectData.locations || []).find((loc) => loc.name.toLowerCase() === panel.location!.toLowerCase())
+    const location = (projectData.locations || []).find(
+      (loc) => loc.name.toLowerCase() === panel.location!.toLowerCase() && readLocationAssetKind(loc) !== 'prop',
+    )
     if (location) {
       const images = location.images || []
       const selected = images.find((img) => img.isSelected) || images[0]
@@ -259,6 +307,8 @@ export async function collectPanelReferenceImages(projectData: NovelProjectData,
       if (signed) refs.push(signed)
     }
   }
+
+  appendPropAssetReferenceUrls(refs, projectData, panel)
 
   return refs
 }

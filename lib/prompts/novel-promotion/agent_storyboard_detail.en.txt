@@ -10,6 +10,9 @@ Character info:
 Location info:
 {locations_description}
 
+Prop reference:
+{props_description}
+
 Task:
 For each panel, output a complete panel object with improved cinematic detail.
 If any character already has `slot`, prefer preserving it exactly and use it as a preferred placement anchor.
@@ -22,6 +25,7 @@ Required fields per panel:
 - location
 - scene_type (daily/emotion/action/epic/suspense)
 - source_text
+- props (string array; preserve from input; [] if none)
 - shot_type
 - camera_move
 - video_prompt
@@ -34,6 +38,7 @@ Output schema example (field names must be preserved):
     "description": "panel description",
     "characters": [{ "name": "Character", "appearance": "appearance", "slot": "the position beneath the throne steps at the center of the hall" }],
     "location": "location name",
+    "props": [],
     "scene_type": "daily",
     "source_text": "source text excerpt",
     "shot_type": "medium shot",
@@ -45,6 +50,7 @@ Output schema example (field names must be preserved):
 
 Rules:
 1. Keep panel order unchanged.
+1b. Preserve `props` arrays from input panels exactly (including []); do not drop the field.
 2. Keep source_text semantically aligned with input; do not rewrite story meaning.
 3. video_prompt should be motion-ready and concrete.
 4. Prefer age+gender wording in video_prompt when naming actors in camera directions.

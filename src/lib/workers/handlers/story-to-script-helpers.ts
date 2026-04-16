@@ -165,13 +165,17 @@ export async function persistAnalyzedProps(params: {
 
   for (const item of params.analyzedProps) {
     const name = asString(item.name).trim()
-    const summary = asString(item.summary).trim()
-    const description = resolvePropVisualDescription({
+    if (!name) continue
+
+    const summaryRaw = asString(item.summary).trim()
+    const descriptionVisual = resolvePropVisualDescription({
       name,
-      summary,
+      summary: summaryRaw,
       description: asString(item.description).trim(),
     })
-    if (!name || !summary || !description) continue
+    if (!descriptionVisual) continue
+
+    const summary = summaryRaw || descriptionVisual
 
     const key = name.toLowerCase()
     if (params.existingNames.has(key)) continue
@@ -190,8 +194,8 @@ export async function persistAnalyzedProps(params: {
     })
     await seedProjectLocationBackedImageSlots({
       locationId: prop.id,
-      descriptions: [description],
-      fallbackDescription: description,
+      descriptions: [descriptionVisual],
+      fallbackDescription: descriptionVisual,
       availableSlots: [],
       locationImageModel: db.locationImage,
     })

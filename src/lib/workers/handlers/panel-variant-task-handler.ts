@@ -17,9 +17,10 @@ import {
 } from '@/lib/location-available-slots'
 import {
   AnyObj,
+  appendPropAssetReferenceUrls,
   findCharacterByName,
-  parseImageUrls,
   parsePanelCharacterReferences,
+  pickCharacterAppearanceReferenceKey,
   pickFirstString,
   resolveNovelData,
 } from './image-task-handler-shared'
@@ -130,12 +131,17 @@ function buildLocationAssetDescription(params: {
   return params.locale === 'en' ? 'No location reference' : '无场景参考'
 }
 
+function readLocationAssetKindForVariant(loc: { assetKind?: string | null; name: string }): string {
+  return typeof loc.assetKind === 'string' && loc.assetKind.trim() ? loc.assetKind : 'location'
+}
+
 function buildVariantReferenceImages(params: {
   includeCharacterAssets: boolean
   includeLocationAsset: boolean
   newPanel: {
     characters: string | null
     location: string | null
+    props?: string | null
   }
   sourcePanelImageUrl: string | null
   projectData: Awaited<ReturnType<typeof resolveNovelData>>
@@ -157,22 +163,16 @@ function buildVariantReferenceImages(params: {
       }
 
       if (!appearance) continue
-      const imageUrls = parseImageUrls((appearance as { imageUrls?: string | null }).imageUrls || null, 'characterAppearance.imageUrls')
-      const selectedIndex = typeof (appearance as { selectedIndex?: number | null }).selectedIndex === 'number'
-        ? (appearance as { selectedIndex?: number | null }).selectedIndex
-        : null
-      const selectedUrl = (selectedIndex !== null && selectedIndex !== undefined ? imageUrls[selectedIndex] : null)
-        || imageUrls[0]
-        || appearance.imageUrl
-        || null
-      const signed = toSignedUrlIfCos(selectedUrl, 3600)
+      const key = pickCharacterAppearanceReferenceKey(appearance)
+      const signed = toSignedUrlIfCos(key, 3600)
       if (signed) refs.push(signed)
     }
   }
 
   if (params.includeLocationAsset && params.newPanel.location) {
     const location = (params.projectData.locations || []).find(
-      (item) => item.name.toLowerCase() === params.newPanel.location!.toLowerCase(),
+      (item) => item.name.toLowerCase() === params.newPanel.location!.toLowerCase()
+        && readLocationAssetKindForVariant(item) !== 'prop',
     )
     if (location) {
       const selected = (location.images || []).find((image) => image.isSelected) || location.images?.[0]
@@ -180,6 +180,8 @@ function buildVariantReferenceImages(params: {
       if (signed) refs.push(signed)
     }
   }
+
+  appendPropAssetReferenceUrls(refs, params.projectData, { props: params.newPanel.props ?? null })
 
   return refs
 }

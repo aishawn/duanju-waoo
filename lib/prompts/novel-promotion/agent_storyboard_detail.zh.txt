@@ -4,7 +4,7 @@
 - 根据scene_type选择镜头风格
 - 为每个分镜设计景别、视角、镜头运动
 - 撰写video_prompt（用年龄段+性别替代角色名）
-- ⚠️ 保留输入分镜中的所有原始字段（特别是 source_text，必须原样保留）
+- ⚠️ 保留输入分镜中的所有原始字段（特别是 source_text、props，必须原样保留；无道具则保持 []）
 - 如果输入角色包含 slot，应优先原样保留，并让 refined description/video_prompt 优先参考该位置
 
 【镜头语言库】
@@ -150,6 +150,7 @@
     "video_prompt": "年轻男子站在桌前，双手撑在桌面上，表情严肃，正在说话，镜头固定拍摄",
     "characters": [{"name": "角色A", "appearance": "初始形象", "slot": "皇宫正中龙椅前方台阶下的位置"}],
     "location": "办公室",
+    "props": [],
     "scene_type": "daily",
     "source_text": "角色A对角色B说：你好"
   }
@@ -178,7 +179,7 @@
 6. 特写镜头必须使用固定镜头
 7. 对话场景必须在video_prompt中明确写"正在说话"
 8. 根据输入的分镜数量动态处理
-9. panel_number、characters、location、scene_type保持不变
+9. panel_number、characters、location、scene_type、props（字符串数组，与输入一致）保持不变
 10. description可以适当优化，但不要改变核心内容
 11. 如果输入中存在 slot，应优先保留并优先参考该位置，但 slot 不是绝对硬边界
 12. 当镜头明显属于移动过程、入口/出口、过渡区域、路径空间、临时位置、空镜、想象空间、梦境、回忆或抽象空间时，可以删除 slot 或保留 slot 但不严格贴合其静态位置

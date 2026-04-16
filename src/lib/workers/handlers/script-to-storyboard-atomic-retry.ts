@@ -1,10 +1,11 @@
 import { safeParseJsonArray } from '@/lib/json-repair'
 import { buildCharactersIntroduction } from '@/lib/constants'
 import { normalizeAnyError } from '@/lib/errors/normalize'
-import type {
-  ScriptToStoryboardPromptTemplates,
-  ScriptToStoryboardStepMeta,
-  ScriptToStoryboardStepOutput,
+import {
+  enrichStoryboardPanelsWithProps,
+  type ScriptToStoryboardPromptTemplates,
+  type ScriptToStoryboardStepMeta,
+  type ScriptToStoryboardStepOutput,
 } from '@/lib/novel-promotion/script-to-storyboard/orchestrator'
 import { listArtifacts } from '@/lib/run-runtime/service'
 import {
@@ -513,7 +514,8 @@ export async function runScriptToStoryboardAtomicRetry(params: {
   }
 
   if (params.retryTarget.phase !== 'phase1') {
-    const finalPanels = mergePanelsWithRules({
+    const planPanels = requireRows(phase1Panels, 'storyboard.clip.phase1')
+    const merged = mergePanelsWithRules({
       finalPanels: requireRows(phase3Panels, 'storyboard.clip.phase3'),
       photographyRules: requireRows(phase2Cinematography, 'storyboard.clip.phase2.cine'),
       actingDirections: requireRows(phase2Acting, 'storyboard.clip.phase2.acting'),
@@ -521,7 +523,7 @@ export async function runScriptToStoryboardAtomicRetry(params: {
     clipPanels.push({
       clipId: params.clip.id,
       clipIndex: params.clipIndex + 1,
-      finalPanels,
+      finalPanels: enrichStoryboardPanelsWithProps(merged, planPanels, clipProps),
     })
   }
 

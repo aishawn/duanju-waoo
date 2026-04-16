@@ -146,7 +146,11 @@ function extractAnalyzedLocations(obj: Record<string, unknown>): Record<string, 
 }
 
 function extractAnalyzedProps(obj: Record<string, unknown>): Record<string, unknown>[] {
-  return toObjectArray(obj.props)
+  const primary = toObjectArray(obj.props)
+  if (primary.length > 0) return primary
+  const altList = toObjectArray(obj.prop_list)
+  if (altList.length > 0) return altList
+  return toObjectArray(obj.items)
 }
 
 const MAX_STEP_ATTEMPTS = 3

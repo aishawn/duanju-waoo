@@ -199,6 +199,53 @@ function mergePanelsWithRules(params: {
   })
 }
 
+function panelFieldAsString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+export function normalizeStoryboardPanelProps(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean)
+}
+
+/**
+ * Ensures each panel carries prop names: prefer phase3 output, then phase1 plan, then clip-level props
+ * (text match or single-prop fallback for product/UGC clips).
+ */
+export function enrichStoryboardPanelsWithProps(
+  panels: StoryboardPanel[],
+  planPanels: StoryboardPanel[],
+  clipPropNames: string[],
+): StoryboardPanel[] {
+  const planByNum = new Map<number, StoryboardPanel>()
+  for (const p of planPanels) {
+    const n = p.panel_number
+    if (typeof n === 'number' && Number.isFinite(n)) {
+      planByNum.set(n, p)
+    }
+  }
+  const clipNames = clipPropNames.map((s) => s.trim()).filter(Boolean)
+
+  return panels.map((panel) => {
+    let props = normalizeStoryboardPanelProps(panel.props)
+    if (props.length === 0) {
+      const plan = typeof panel.panel_number === 'number' ? planByNum.get(panel.panel_number) : undefined
+      if (plan) props = normalizeStoryboardPanelProps(plan.props)
+    }
+    if (props.length === 0 && clipNames.length > 0) {
+      const text = `${panelFieldAsString(panel.description)}${panelFieldAsString(panel.source_text)}`
+      const matched = clipNames.filter((name) => name && text.includes(name))
+      if (matched.length > 0) props = matched
+    }
+    if (props.length === 0 && clipNames.length === 1) {
+      props = [clipNames[0]]
+    }
+    return { ...panel, props }
+  })
+}
+
 const MAX_STEP_ATTEMPTS = 3
 const MAX_RETRY_DELAY_MS = 10_000
 
@@ -471,14 +518,15 @@ export async function runScriptToStoryboardOrchestrator(
       phase2ActingByClipId.set(clip.id, actingDirections)
       phase3PanelsByClipId.set(clip.id, filteredPhase3Panels)
 
+      const mergedRules = mergePanelsWithRules({
+        finalPanels: filteredPhase3Panels,
+        photographyRules,
+        actingDirections,
+      })
       return {
         clipId: clip.id,
         clipIndex,
-        finalPanels: mergePanelsWithRules({
-          finalPanels: filteredPhase3Panels,
-          photographyRules,
-          actingDirections,
-        }),
+        finalPanels: enrichStoryboardPanelsWithProps(mergedRules, planPanels, clipProps),
       }
     },
   )
