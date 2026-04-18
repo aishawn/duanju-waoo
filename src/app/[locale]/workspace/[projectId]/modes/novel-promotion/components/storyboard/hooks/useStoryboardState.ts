@@ -13,6 +13,17 @@ import {
   sortStoryboardsByClipOrder,
 } from './storyboard-state-utils'
 
+function parsePanelPropsJson(raw: string | null | undefined): string[] {
+  if (!raw?.trim()) return []
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item): item is string => typeof item === 'string')
+  } catch {
+    return []
+  }
+}
+
 export interface StoryboardPanel {
   id: string
   panelIndex: number
@@ -31,6 +42,7 @@ export interface StoryboardPanel {
   photographyRules?: string | null  // 单镜头摄影规则JSON
   actingNotes?: string | null       // 演技指导数据JSON
   imageTaskRunning?: boolean  // 任务态运行状态（由 tasks 派生）
+  props?: string[]
 }
 
 interface UseStoryboardStateProps {
@@ -146,14 +158,19 @@ export function useStoryboardState({
         imageUrl: p.imageUrl,
         photographyRules: p.photographyRules,
         actingNotes: p.actingNotes,
-        imageTaskRunning: p.imageTaskRunning || false
+        imageTaskRunning: p.imageTaskRunning || false,
+        props: parsePanelPropsJson(p.props),
       }
     })
   }
 
   const getPanelEditData = (panel: StoryboardPanel): PanelEditData => {
     if (panelEdits[panel.id]) {
-      return panelEdits[panel.id]
+      const edited = panelEdits[panel.id]
+      return {
+        ...edited,
+        props: edited.props ?? panel.props ?? [],
+      }
     }
     return {
       id: panel.id,
@@ -170,13 +187,18 @@ export function useStoryboardState({
       videoPrompt: panel.video_prompt || null,
       photographyRules: panel.photographyRules ?? null,
       actingNotes: panel.actingNotes ?? null,
-      sourceText: panel.source_text
+      sourceText: panel.source_text,
+      props: panel.props ? [...panel.props] : [],
     }
   }
 
   const updatePanelEdit = (panelId: string, panel: StoryboardPanel, updates: Partial<PanelEditData>) => {
     setPanelEdits(prev => {
-      const currentData = prev[panelId] || getPanelEditData(panel)
+      const baseline = getPanelEditData(panel)
+      const fromPrev = prev[panelId]
+      const currentData = fromPrev
+        ? { ...fromPrev, props: fromPrev.props ?? baseline.props }
+        : baseline
       return {
         ...prev,
         [panelId]: { ...currentData, ...updates }

@@ -3,8 +3,7 @@ import { fal } from '@fal-ai/client'
 import { prisma } from '@/lib/prisma'
 import { getAudioApiKey, getProviderConfig, getProviderKey, resolveModelSelectionOrSingle } from '@/lib/api-config'
 import { normalizeToBase64ForGeneration } from '@/lib/media/outbound-image'
-import { extractStorageKey, getSignedUrl, toFetchableUrl, uploadObject } from '@/lib/storage'
-import { resolveStorageKeyFromMediaValue } from '@/lib/media/service'
+import { getSignedUrl, toFetchableUrl, uploadObject } from '@/lib/storage'
 import { synthesizeWithBailianTTS } from '@/lib/providers/bailian'
 import {
   parseSpeakerVoiceMap,
@@ -12,6 +11,7 @@ import {
   type CharacterVoiceFields,
   type SpeakerVoiceMap,
 } from '@/lib/voice/provider-voice-binding'
+import { resolveReferenceAudioUrlForGeneration } from '@/lib/voice/reference-audio-url'
 
 type CheckCancelled = () => Promise<void>
 type CharacterVoiceProfile = CharacterVoiceFields & { name: string }
@@ -131,24 +131,6 @@ function matchCharacterBySpeaker(
   return characters.find((character) => character.name.includes(speaker) || speaker.includes(character.name))
 }
 
-async function resolveReferenceAudioUrl(referenceAudioUrl: string): Promise<string> {
-  if (referenceAudioUrl.startsWith('http') || referenceAudioUrl.startsWith('data:')) {
-    return referenceAudioUrl
-  }
-  if (referenceAudioUrl.startsWith('/m/')) {
-    const storageKey = await resolveStorageKeyFromMediaValue(referenceAudioUrl)
-    if (!storageKey) {
-      throw new Error(`无法解析参考音频路径: ${referenceAudioUrl}`)
-    }
-    return getSignedUrl(storageKey, 3600)
-  }
-  if (referenceAudioUrl.startsWith('/api/files/')) {
-    const storageKey = extractStorageKey(referenceAudioUrl)
-    return storageKey ? getSignedUrl(storageKey, 3600) : referenceAudioUrl
-  }
-  return getSignedUrl(referenceAudioUrl, 3600)
-}
-
 async function downloadAudioData(audioUrl: string): Promise<Buffer> {
   const response = await fetch(toFetchableUrl(audioUrl))
   if (!response.ok) {
@@ -225,7 +207,7 @@ export async function generateVoiceLine(params: {
       throw new Error('请先为该发言人设置参考音频')
     }
 
-    const fullAudioUrl = await resolveReferenceAudioUrl(voiceBinding.referenceAudioUrl)
+    const fullAudioUrl = await resolveReferenceAudioUrlForGeneration(voiceBinding.referenceAudioUrl)
     const falApiKey = await getAudioApiKey(params.userId, audioSelection.modelKey)
     generated = await generateVoiceWithIndexTTS2({
       endpoint: audioSelection.modelId,

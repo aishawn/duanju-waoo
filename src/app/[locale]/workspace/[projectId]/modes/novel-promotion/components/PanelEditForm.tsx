@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import PanelEditFormV2 from '@/components/ui/patterns/PanelEditFormV2'
 import { GlassButton, GlassModalShell, GlassSurface } from '@/components/ui/primitives'
-import { Character, Location } from '@/types/project'
+import { Character, Location, Prop } from '@/types/project'
 import { useProjectAssets } from '@/lib/query/hooks/useProjectAssets'
 import { AppIcon } from '@/components/ui/icons'
 
@@ -29,6 +29,7 @@ export interface PanelEditData {
   photographyRules?: string | null
   actingNotes?: string | null
   sourceText?: string | null
+  props: string[]
 }
 
 interface PanelEditFormProps {
@@ -40,8 +41,10 @@ interface PanelEditFormProps {
   onUpdate: (updates: Partial<PanelEditData>) => void
   onOpenCharacterPicker: () => void
   onOpenLocationPicker: () => void
+  onOpenPropPicker: () => void
   onRemoveCharacter: (index: number) => void
   onRemoveLocation: () => void
+  onRemoveProp: (index: number) => void
 }
 
 export default function PanelEditForm({
@@ -53,8 +56,10 @@ export default function PanelEditForm({
   onUpdate,
   onOpenCharacterPicker,
   onOpenLocationPicker,
+  onOpenPropPicker,
   onRemoveCharacter,
-  onRemoveLocation
+  onRemoveLocation,
+  onRemoveProp,
 }: PanelEditFormProps) {
   return (
     <PanelEditFormV2
@@ -66,8 +71,10 @@ export default function PanelEditForm({
       onUpdate={onUpdate}
       onOpenCharacterPicker={onOpenCharacterPicker}
       onOpenLocationPicker={onOpenLocationPicker}
+      onOpenPropPicker={onOpenPropPicker}
       onRemoveCharacter={onRemoveCharacter}
       onRemoveLocation={onRemoveLocation}
+      onRemoveProp={onRemoveProp}
       uiMode="flow"
     />
   )
@@ -174,6 +181,63 @@ export function LocationPickerModal({
                   <div className="font-medium text-[var(--glass-text-primary)] flex items-center gap-1.5">
                     <AppIcon name="imageAlt" className="h-3.5 w-3.5 text-[var(--glass-text-tertiary)]" />
                     <span>{loc.name}</span>
+                  </div>
+                  {isSelected ? (
+                    <span className="text-xs text-[var(--glass-tone-success-fg)]">{ts('panel.selected')}</span>
+                  ) : null}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </GlassModalShell>
+  )
+}
+
+interface PropPickerModalProps {
+  projectId: string
+  currentProps: string[]
+  onSelect: (propName: string) => void
+  onClose: () => void
+}
+
+export function PropPickerModal({
+  projectId,
+  currentProps,
+  onSelect,
+  onClose
+}: PropPickerModalProps) {
+  const ts = useTranslations('storyboard')
+  const { data: assets } = useProjectAssets(projectId)
+  const propsList: Prop[] = assets?.props ?? []
+
+  return (
+    <GlassModalShell open onClose={onClose} size="md" title={ts('panel.selectProp')}>
+      <div className="max-h-[60vh] overflow-y-auto">
+        {propsList.length === 0 ? (
+          <p className="py-8 text-center text-[var(--glass-text-secondary)]">{ts('panel.noPropAssets')}</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {propsList.map((prop) => {
+              const isSelected = currentProps.includes(prop.name)
+              return (
+                <button
+                  key={prop.id}
+                  type="button"
+                  disabled={isSelected}
+                  onClick={() => {
+                    if (!isSelected) onSelect(prop.name)
+                  }}
+                  className={`rounded-[var(--glass-radius-md)] border px-3 py-3 text-left transition-colors ${
+                    isSelected
+                      ? 'bg-[var(--glass-tone-success-bg)] text-[var(--glass-tone-success-fg)] opacity-70'
+                      : 'bg-[var(--glass-bg-muted)] text-[var(--glass-text-secondary)]'
+                  }`}
+                >
+                  <div className="font-medium text-[var(--glass-text-primary)] flex items-center gap-1.5">
+                    <AppIcon name="imageAlt" className="h-3.5 w-3.5 text-[var(--glass-text-tertiary)]" />
+                    <span>{prop.name}</span>
                   </div>
                   {isSelected ? (
                     <span className="text-xs text-[var(--glass-tone-success-fg)]">{ts('panel.selected')}</span>
