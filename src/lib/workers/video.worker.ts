@@ -18,6 +18,7 @@ import { normalizeToBase64ForGeneration } from '@/lib/media/outbound-image'
 import { resolveBuiltinCapabilitiesByModelKey } from '@/lib/model-capabilities/lookup'
 import { parseModelKeyStrict } from '@/lib/model-config-contract'
 import { getProviderConfig } from '@/lib/api-config'
+import { mergePanelDurationIntoGenerationOptions } from '@/lib/video/panel-duration-merge'
 
 type AnyObj = Record<string, unknown>
 type VideoOptionValue = string | number | boolean
@@ -28,6 +29,17 @@ type PanelRecord = NonNullable<Awaited<ReturnType<typeof prisma.novelPromotionPa
 function toDurationMs(value: number | null | undefined): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return undefined
   return value > 1000 ? Math.round(value) : Math.round(value * 1000)
+}
+
+function resolveEffectiveVideoModelKey(payload: AnyObj, fallbackVideoModel: string): string {
+  const fl = payload.firstLastFrame
+  if (fl && typeof fl === 'object' && !Array.isArray(fl)) {
+    const flModel = (fl as AnyObj).flModel
+    if (typeof flModel === 'string' && flModel.trim()) {
+      return flModel.trim()
+    }
+  }
+  return fallbackVideoModel
 }
 
 function extractGenerationOptions(payload: AnyObj): VideoOptionMap {
@@ -189,7 +201,15 @@ async function handleVideoPanelTask(job: Job<TaskJobData>) {
 
   const panel = await getPanelForVideoTask(job)
 
-  const generationOptions = extractGenerationOptions(payload)
+  const rawGenerationOptions = extractGenerationOptions(payload)
+  const effectiveModelKey = resolveEffectiveVideoModelKey(payload, modelId)
+  const builtinCaps = resolveBuiltinCapabilitiesByModelKey('video', effectiveModelKey)
+  const durationOptions = builtinCaps?.video?.durationOptions
+  const generationOptions = mergePanelDurationIntoGenerationOptions(
+    rawGenerationOptions,
+    panel.duration,
+    durationOptions,
+  )
 
   await reportTaskProgress(job, 10, {
     stage: 'generate_panel_video',
