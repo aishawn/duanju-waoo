@@ -116,13 +116,17 @@ export function usePanelVideoModel({
     [selectedModelOverrides],
   )
 
+  // 仅在切换模型或项目里该模型的能力覆盖变更时，用服务端/项目配置打底。
+  // 不要把 capabilityDefinitions、pricingTiers 放进依赖：父组件重算或目录刷新时若仍依赖它们，
+  // 会用 selectedModelOverrides（常见含 duration:3）整表覆盖，导致用户在面板里改成 7s 后又被刷回 3s。
   useEffect(() => {
     setGenerationOptions(normalizeVideoGenerationSelections({
       definitions: capabilityDefinitions,
       pricingTiers,
       selection: selectedModelOverrides,
     }))
-  }, [selectedModel, selectedModelOverridesSignature, capabilityDefinitions, pricingTiers, selectedModelOverrides])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 见上：避免定义/计价引用变化时冲掉本地所选时长等
+  }, [selectedModel, selectedModelOverridesSignature])
 
   useEffect(() => {
     setGenerationOptions((previous) => normalizeVideoGenerationSelections({
