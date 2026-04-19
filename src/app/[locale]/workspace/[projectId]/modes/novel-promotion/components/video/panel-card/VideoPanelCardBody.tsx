@@ -1,9 +1,13 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { ModelCapabilityDropdown } from '@/components/ui/config-modals/ModelCapabilityDropdown'
 import { AppIcon } from '@/components/ui/icons'
 import type { VideoPanelRuntime } from './hooks/useVideoPanelActions'
+import {
+  panelDurationToSeconds,
+  pickCeilDurationOptionForScript,
+} from '@/lib/video/panel-duration-merge'
 
 interface VideoPanelCardBodyProps {
   runtime: VideoPanelRuntime
@@ -45,6 +49,21 @@ export default function VideoPanelCardBody({ runtime }: VideoPanelCardBodyProps)
     return unitText ? `${labelText} (${unitText})` : labelText
   }
 
+  const durationTierHint = useMemo(() => {
+    const scriptSec = panelDurationToSeconds(panel.textPanel?.duration ?? undefined)
+    const durationField = videoModel.capabilityFields.find((f) => f.field === 'duration')
+    const opts = durationField?.options?.filter(
+      (x): x is number => typeof x === 'number' && Number.isFinite(x),
+    )
+    if (scriptSec === null || !opts?.length) {
+      return { scriptSec, alignedSec: null as number | null, tierLabels: '' as string, hasTiers: false }
+    }
+    const alignedSec = pickCeilDurationOptionForScript(scriptSec, opts)
+    const unit = t('promptModal.duration')
+    const tierLabels = opts.map((s) => `${s}${unit}`).join(' / ')
+    return { scriptSec, alignedSec, tierLabels, hasTiers: true }
+  }, [panel.textPanel?.duration, videoModel.capabilityFields, t])
+
   const isFirstLastFrameGenerated = panel.videoGenerationMode === 'firstlastframe' && !!panel.videoUrl
   const showsIncomingLinkBadge = layout.isLastFrame && !!layout.prevPanel
   const showsOutgoingLinkBadge = layout.isLinked && !!layout.nextPanel
@@ -55,8 +74,25 @@ export default function VideoPanelCardBody({ runtime }: VideoPanelCardBodyProps)
     <div className="p-4 space-y-2">
       <div className="flex items-center justify-between text-xs">
         <span className="px-2 py-0.5 bg-[var(--glass-tone-info-bg)] text-[var(--glass-tone-info-fg)] rounded font-medium">{panel.textPanel?.shot_type || t('panelCard.unknownShotType')}</span>
-        {panel.textPanel?.duration && <span className="text-[var(--glass-text-tertiary)]">{panel.textPanel.duration}{t('promptModal.duration')}</span>}
+        {panel.textPanel?.duration !== undefined && panel.textPanel?.duration !== null && (
+          <span className="text-[var(--glass-text-tertiary)]">
+            {panel.textPanel.duration}{t('promptModal.duration')}
+            <span className="text-[var(--glass-text-tertiary)]/80"> · {t('panelCard.scriptRhythmLabel')}</span>
+          </span>
+        )}
       </div>
+
+      {durationTierHint.scriptSec !== null && (
+        <p className="text-[10px] text-[var(--glass-text-tertiary)] leading-snug -mt-1 mb-1">
+          {durationTierHint.hasTiers && durationTierHint.alignedSec !== null
+            ? t('panelCard.renderTierExplainer', {
+                aligned: durationTierHint.alignedSec,
+                unit: t('promptModal.duration'),
+                tiers: durationTierHint.tierLabels,
+              })
+            : t('panelCard.renderTierExplainerNoTiers')}
+        </p>
+      )}
 
       <p className="text-sm text-[var(--glass-text-secondary)] line-clamp-2">{panel.textPanel?.description}</p>
 

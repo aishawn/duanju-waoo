@@ -1106,6 +1106,15 @@
   {
     "apiType": "video",
     "provider": "fal",
+    "modelId": "fal-wan27-r2v",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 2.2
+    }
+  },
+  {
+    "apiType": "video",
+    "provider": "fal",
     "modelId": "fal-veo31",
     "pricing": {
       "mode": "flat",

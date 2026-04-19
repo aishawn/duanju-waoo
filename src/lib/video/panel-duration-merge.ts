@@ -9,20 +9,26 @@ export function panelDurationToSeconds(value: number | null | undefined): number
   return value > 1000 ? value / 1000 : value
 }
 
-export function pickClosestDurationOption(desiredSeconds: number, allowed: readonly number[]): number {
-  if (allowed.length === 0) return desiredSeconds
+/**
+ * Pick the smallest allowed duration >= script seconds; if script exceeds all tiers, use max.
+ * Matches "don't shorten below pacing" better than rounding to nearest (e.g. 7s → 10s not 5s).
+ */
+export function pickCeilDurationOptionForScript(desiredSeconds: number, allowed: readonly number[]): number {
   const sorted = [...allowed].filter((x) => typeof x === 'number' && Number.isFinite(x)).sort((a, b) => a - b)
   if (sorted.length === 0) return desiredSeconds
-  let best = sorted[0]!
-  let bestDist = Math.abs(desiredSeconds - best)
-  for (const x of sorted) {
-    const d = Math.abs(desiredSeconds - x)
-    if (d < bestDist) {
-      best = x
-      bestDist = d
-    }
-  }
-  return best
+  const hit = sorted.find((x) => x >= desiredSeconds)
+  return hit !== undefined ? hit : sorted[sorted.length - 1]!
+}
+
+function coerceToAllowedDuration(
+  raw: string | number | boolean | undefined,
+  durationOptions: readonly number[],
+): number | null {
+  if (raw === undefined) return null
+  if (typeof raw === 'boolean') return null
+  const n = typeof raw === 'number' ? raw : Number(String(raw).trim())
+  if (!Number.isFinite(n)) return null
+  return durationOptions.includes(n) ? n : null
 }
 
 export function mergePanelDurationIntoGenerationOptions<T extends Record<string, string | number | boolean>>(
@@ -33,10 +39,17 @@ export function mergePanelDurationIntoGenerationOptions<T extends Record<string,
   if (!durationOptions || durationOptions.length === 0) {
     return generationOptions
   }
+  const fromUi = coerceToAllowedDuration(generationOptions.duration, durationOptions)
   const secs = panelDurationToSeconds(panelDurationRaw ?? null)
   if (secs === null) {
+    if (fromUi !== null) {
+      return { ...generationOptions, duration: fromUi }
+    }
     return generationOptions
   }
-  const snapped = pickClosestDurationOption(secs, durationOptions)
-  return { ...generationOptions, duration: snapped }
+  const scriptSnap = pickCeilDurationOptionForScript(secs, durationOptions)
+  if (fromUi !== null && fromUi >= scriptSnap) {
+    return { ...generationOptions, duration: fromUi }
+  }
+  return { ...generationOptions, duration: scriptSnap }
 }

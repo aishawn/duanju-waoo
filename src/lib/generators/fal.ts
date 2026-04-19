@@ -8,6 +8,7 @@ import { createScopedLogger, logError as _ulogError } from '@/lib/logging/core'
  * 
  * 视频模型：
  * - Wan 2.6 (fal-wan25) - wan/v2.6/image-to-video
+ * - Wan 2.7 R2V (fal-wan27-r2v) - fal-ai/wan/v2.7/reference-to-video
  * - Veo 3.1 (fal-veo31) - fal-ai/veo3.1/fast/image-to-video
  * - Sora 2 (fal-sora2) - fal-ai/sora-2/image-to-video  
  * - Kling 2.5 Turbo Pro - fal-ai/kling-video/v2.5-turbo/pro/image-to-video
@@ -26,6 +27,30 @@ import { getProviderConfig } from '@/lib/api-config'
 import { submitFalTask } from '@/lib/async-submit'
 import { normalizeToBase64ForGeneration } from '@/lib/media/outbound-image'
 import { buildFalQueueUrl } from '@/lib/providers/fal/base-url'
+import { pickCeilDurationOptionForScript } from '@/lib/video/panel-duration-merge'
+
+const WAN26_DURATION_ENUM = [5, 10, 15] as const
+const WAN27_DURATION_ENUM = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const
+
+function resolveWan26DurationSeconds(duration: number | undefined): string {
+  if (duration === undefined || !Number.isFinite(duration)) {
+    return '5'
+  }
+  const snapped = WAN26_DURATION_ENUM.includes(duration as 5 | 10 | 15)
+    ? duration
+    : pickCeilDurationOptionForScript(duration, WAN26_DURATION_ENUM)
+  return String(snapped)
+}
+
+function resolveWan27DurationSeconds(duration: number | undefined): number {
+  if (duration === undefined || !Number.isFinite(duration)) {
+    return 5
+  }
+  if (WAN27_DURATION_ENUM.includes(duration as typeof WAN27_DURATION_ENUM[number])) {
+    return duration
+  }
+  return pickCeilDurationOptionForScript(duration, WAN27_DURATION_ENUM)
+}
 
 // ============================================================
 // 图像模型端点映射（modelId → FAL 端点前缀）
@@ -42,6 +67,7 @@ const FAL_IMAGE_ENDPOINTS: Record<string, { base: string; edit: string }> = {
 
 const FAL_VIDEO_ENDPOINTS: Record<string, string> = {
     'fal-wan25': 'wan/v2.6/image-to-video',
+    'fal-wan27-r2v': 'fal-ai/wan/v2.7/reference-to-video',
     'fal-veo31': 'fal-ai/veo3.1/fast/image-to-video',
     'fal-sora2': 'fal-ai/sora-2/image-to-video',
     'fal-ai/kling-video/v2.5-turbo/pro/image-to-video': 'fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
@@ -244,9 +270,23 @@ export class FalVideoGenerator extends BaseVideoGenerator {
                     image_url: imageUrl,
                     prompt,
                     ...(resolution ? { resolution } : {}),
-                    ...(typeof duration === 'number' ? { duration: String(duration) } : {})
+                    duration: resolveWan26DurationSeconds(duration),
                 }
                 break
+            case 'fal-wan27-r2v': {
+                const dur = resolveWan27DurationSeconds(duration)
+                input = {
+                    prompt,
+                    reference_image_urls: [imageUrl],
+                    resolution: resolution === '720p' || resolution === '1080p' ? resolution : '1080p',
+                    duration: dur,
+                    ...(aspectRatio
+                        ? { aspect_ratio: aspectRatio }
+                        : { aspect_ratio: '16:9' }),
+                    enable_safety_checker: true,
+                }
+                break
+            }
             case 'fal-veo31':
                 input = {
                     image_url: imageUrl,
