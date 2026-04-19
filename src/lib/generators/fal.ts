@@ -52,6 +52,17 @@ function resolveWan27DurationSeconds(duration: number | undefined): number {
   return pickCeilDurationOptionForScript(duration, WAN27_DURATION_ENUM)
 }
 
+/** Kling/Veo/Sora：任一路径若把 duration 变成字符串，原先 `typeof === 'number'` 会漏传，FAL 侧会按默认短时长出片 */
+function coerceFalVideoDurationSeconds(raw: unknown): number | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    const n = Number(raw)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+
 // ============================================================
 // 图像模型端点映射（modelId → FAL 端点前缀）
 // ============================================================
@@ -287,43 +298,51 @@ export class FalVideoGenerator extends BaseVideoGenerator {
                 }
                 break
             }
-            case 'fal-veo31':
+            case 'fal-veo31': {
+                const durSec = coerceFalVideoDurationSeconds(duration)
                 input = {
                     image_url: imageUrl,
                     prompt,
                     ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
-                    ...(typeof duration === 'number' ? { duration: `${duration}s` } : {}),
+                    ...(durSec !== undefined ? { duration: `${durSec}s` } : {}),
                     generate_audio: false
                 }
                 break
-            case 'fal-sora2':
+            }
+            case 'fal-sora2': {
+                const durSora = coerceFalVideoDurationSeconds(duration)
                 input = {
                     image_url: imageUrl,
                     prompt,
                     ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
-                    ...(typeof duration === 'number' ? { duration } : {}),
+                    ...(durSora !== undefined ? { duration: durSora } : {}),
                     delete_video: false
                 }
                 break
-            case 'fal-ai/kling-video/v2.5-turbo/pro/image-to-video':
+            }
+            case 'fal-ai/kling-video/v2.5-turbo/pro/image-to-video': {
+                const durKling = coerceFalVideoDurationSeconds(duration)
                 input = {
                     image_url: imageUrl,
                     prompt,
-                    ...(typeof duration === 'number' ? { duration: String(duration) } : {}),
+                    ...(durKling !== undefined ? { duration: String(durKling) } : {}),
                     negative_prompt: 'blur, distort, and low quality',
                     cfg_scale: 0.5
                 }
                 break
+            }
             case 'fal-ai/kling-video/v3/standard/image-to-video':
-            case 'fal-ai/kling-video/v3/pro/image-to-video':
+            case 'fal-ai/kling-video/v3/pro/image-to-video': {
+                const durKling3 = coerceFalVideoDurationSeconds(duration)
                 input = {
                     start_image_url: imageUrl,
                     prompt,
                     ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
-                    ...(typeof duration === 'number' ? { duration: String(duration) } : {}),
+                    ...(durKling3 !== undefined ? { duration: String(durKling3) } : {}),
                     generate_audio: false,
                 }
                 break
+            }
             default:
                 throw new Error(`FAL_VIDEO_MODEL_UNSUPPORTED: ${modelId}`)
         }

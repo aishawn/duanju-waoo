@@ -91,4 +91,20 @@ describe('FalVideoGenerator kling presets', () => {
     expect(payload.aspect_ratio).toBe('16:9')
     expect(payload.generate_audio).toBe(false)
   })
+
+  it('passes string duration through coercion for Kling v3 (API would default if omitted)', async () => {
+    const generator = new FalVideoGenerator()
+    await generator.generate({
+      userId: 'user-1',
+      imageUrl: 'https://example.com/start.png',
+      prompt: 'p',
+      options: {
+        modelId: 'fal-ai/kling-video/v3/standard/image-to-video',
+        duration: '7' as unknown as number,
+        aspectRatio: '16:9',
+      },
+    })
+    const submitCall = asyncSubmitMock.submitFalTask.mock.calls.at(0) as [string, Record<string, unknown>, string]
+    expect(submitCall[1].duration).toBe('7')
+  })
 })

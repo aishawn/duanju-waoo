@@ -43,16 +43,24 @@ function resolveEffectiveVideoModelKey(payload: AnyObj, fallbackVideoModel: stri
 }
 
 function extractGenerationOptions(payload: AnyObj): VideoOptionMap {
-  const fromEnvelope = payload.generationOptions
-  if (!fromEnvelope || typeof fromEnvelope !== 'object' || Array.isArray(fromEnvelope)) {
-    return {}
-  }
-
   const next: VideoOptionMap = {}
-  for (const [key, value] of Object.entries(fromEnvelope as Record<string, unknown>)) {
-    if (key === 'aspectRatio') continue
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      next[key] = value
+  const fromEnvelope = payload.generationOptions
+  if (fromEnvelope && typeof fromEnvelope === 'object' && !Array.isArray(fromEnvelope)) {
+    for (const [key, value] of Object.entries(fromEnvelope as Record<string, unknown>)) {
+      if (key === 'aspectRatio') continue
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        next[key] = value
+      }
+    }
+  }
+  // 顶层 duration 兜底（JSON/序列化后偶发只有数字字符串等情况）
+  if (next.duration === undefined && payload.duration !== undefined) {
+    const raw = payload.duration
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      next.duration = raw
+    } else if (typeof raw === 'string' && raw.trim() !== '') {
+      const n = Number(raw)
+      if (Number.isFinite(n)) next.duration = n
     }
   }
   return next
