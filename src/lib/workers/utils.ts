@@ -22,6 +22,15 @@ import { prisma } from '@/lib/prisma'
 const DEFAULT_POLL_TIMEOUT_MS = Number.parseInt(process.env.WORKER_EXTERNAL_TIMEOUT_MS || String(20 * 60 * 1000), 10)
 const DEFAULT_POLL_INTERVAL_MS = Number.parseInt(process.env.WORKER_EXTERNAL_POLL_MS || '3000', 10)
 
+function coerceFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const n = Number(value)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+
 /**
  * 查询 DB 中任务是否已有 externalId（服务重启后续接轮询用，避免重复提交外部 API）
  */
@@ -459,8 +468,9 @@ export async function resolveVideoSourceFromGeneration(
   })
 
   const runtimeSelections: Record<string, string | number | boolean> = {}
-  if (typeof params.options?.duration === 'number') {
-    runtimeSelections.duration = params.options.duration
+  const durationForRuntime = coerceFiniteNumber(params.options?.duration)
+  if (durationForRuntime !== undefined) {
+    runtimeSelections.duration = durationForRuntime
   }
   if (typeof params.options?.resolution === 'string') {
     runtimeSelections.resolution = params.options.resolution
@@ -488,14 +498,21 @@ export async function resolveVideoSourceFromGeneration(
   const providerRequestOptions: Record<string, string | number | boolean> = {}
   for (const [key, value] of Object.entries(params.options || {})) {
     if (key === 'generationMode' || value === undefined) continue
+    if (key === 'duration') {
+      const n = coerceFiniteNumber(value)
+      if (n !== undefined) {
+        providerRequestOptions[key] = n
+        continue
+      }
+    }
     providerRequestOptions[key] = value
   }
 
   const result = await withLogContext(
     { projectId: job.data.projectId, taskId: job.data.taskId, userId: params.userId },
     () => generateVideo(params.userId, params.modelId, params.imageUrl, {
-      ...providerRequestOptions,
       ...providerCapabilityOptions,
+      ...providerRequestOptions,
     }),
   )
   if (!result.success) {

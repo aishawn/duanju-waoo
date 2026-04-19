@@ -195,12 +195,15 @@ export async function generateVideo(
     _ulogInfo(`[generateVideo] resolved model selection: ${selection.modelKey}`)
     const providerKey = getProviderKey(selection.provider).toLowerCase()
     if (providerKey === 'bailian') {
+        // Bailian 图生视频 API 使用 size/resolution，不接受通用 aspectRatio；worker 会注入项目比例
+        const bailianVideoOptions = { ...(options || {}) }
+        delete bailianVideoOptions.aspectRatio
         return await generateBailianVideo({
             userId,
             imageUrl,
             prompt: options?.prompt,
             options: {
-                ...(options || {}),
+                ...bailianVideoOptions,
                 provider: selection.provider,
                 modelId: selection.modelId,
                 modelKey: selection.modelKey,
