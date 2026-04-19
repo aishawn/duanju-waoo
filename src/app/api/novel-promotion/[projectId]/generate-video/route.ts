@@ -15,6 +15,7 @@ import {
 } from '@/lib/model-capabilities/lookup'
 import { resolveBuiltinPricing } from '@/lib/model-pricing/lookup'
 import { resolveProjectModelCapabilityGenerationOptions } from '@/lib/config-service'
+import { createScopedLogger } from '@/lib/logging/core'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -35,6 +36,22 @@ function toVideoRuntimeSelections(value: unknown): Record<string, CapabilityValu
 function resolveVideoGenerationMode(payload: unknown): 'normal' | 'firstlastframe' {
   if (!isRecord(payload)) return 'normal'
   return isRecord(payload.firstLastFrame) ? 'firstlastframe' : 'normal'
+}
+
+/** 入队前打日志：排查「UI 选了 7s 但任务里没有 duration」时对比 Network 与 worker */
+function summarizeGenerateVideoRequestForLog(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) return { shape: 'invalid' }
+  const gen = isRecord(body.generationOptions) ? body.generationOptions : null
+  return {
+    videoModel: typeof body.videoModel === 'string' ? body.videoModel : null,
+    batchAll: body.all === true,
+    storyboardId: typeof body.storyboardId === 'string' ? body.storyboardId : null,
+    panelIndex: body.panelIndex,
+    generationOptions: gen,
+    generationOptionKeys: gen ? Object.keys(gen) : [],
+    duration: gen && 'duration' in gen ? gen.duration : null,
+    hasFirstLastFrame: isRecord(body.firstLastFrame),
+  }
 }
 
 function isSeedance2Model(modelKey: string): boolean {
@@ -201,6 +218,17 @@ export const POST = apiHandler(async (
     payload: body,
     projectId,
     userId: session.user.id,
+  })
+
+  createScopedLogger({
+    module: 'api',
+    action: 'novel_promotion.generate_video',
+    requestId: getRequestId(request),
+    projectId,
+    userId: session.user.id,
+  }).info({
+    message: 'generate-video: enqueue payload snapshot',
+    details: summarizeGenerateVideoRequestForLog(body),
   })
 
   if (isBatch) {
