@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireProjectAuthLight, isErrorResponse } from '@/lib/api-auth'
@@ -36,6 +37,21 @@ function toVideoRuntimeSelections(value: unknown): Record<string, CapabilityValu
 function resolveVideoGenerationMode(payload: unknown): 'normal' | 'firstlastframe' {
   if (!isRecord(payload)) return 'normal'
   return isRecord(payload.firstLastFrame) ? 'firstlastframe' : 'normal'
+}
+
+/**
+ * 同一分镜曾仅用 panelId 做 dedupe：换时长/模型后若旧任务仍 active，会复用旧任务而忽略新 body（例如仍按 3s 跑）。
+ * 将生成相关参数纳入 key，使不同配置可并行或排队为新任务。
+ */
+function videoPanelDedupeKey(panelId: string, body: unknown): string {
+  const b = isRecord(body) ? body : {}
+  const canonical = JSON.stringify({
+    videoModel: typeof b.videoModel === 'string' ? b.videoModel : '',
+    generationOptions: b.generationOptions ?? null,
+    firstLastFrame: b.firstLastFrame ?? null,
+  })
+  const suffix = createHash('sha256').update(canonical).digest('hex').slice(0, 20)
+  return `video_panel:${panelId}:${suffix}`
 }
 
 /** 入队前打日志：排查「UI 选了 7s 但任务里没有 duration」时对比 Network 与 worker */
@@ -267,7 +283,7 @@ export const POST = apiHandler(async (
           payload: withTaskUiPayload(body, {
             hasOutputAtStart: await hasPanelVideoOutput(panel.id),
           }),
-          dedupeKey: `video_panel:${panel.id}`,
+          dedupeKey: videoPanelDedupeKey(panel.id, body),
           billingInfo: buildVideoPanelBillingInfoOrThrow(body),
         }),
       ),
@@ -302,7 +318,7 @@ export const POST = apiHandler(async (
     payload: withTaskUiPayload(body, {
       hasOutputAtStart: await hasPanelVideoOutput(panel.id),
     }),
-    dedupeKey: `video_panel:${panel.id}`,
+    dedupeKey: videoPanelDedupeKey(panel.id, body),
     billingInfo: buildVideoPanelBillingInfoOrThrow(body),
   })
 
