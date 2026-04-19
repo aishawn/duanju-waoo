@@ -1,8 +1,11 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { NovelPromotionStoryboard } from '@/types/project'
 import { useStoryboardTaskPresentation } from '@/lib/query/hooks/useTaskPresentation'
+import { queryKeys } from '@/lib/query/keys'
+import type { TaskTargetState } from '@/lib/query/hooks/useTaskTargetStateMap'
 
 interface TaskTarget {
   key: string
@@ -15,6 +18,8 @@ interface TaskTarget {
 
 interface UseStoryboardTaskAwareStoryboardsProps {
   projectId: string
+  /** Used to refetch episode payload when async tasks finish (SSE may be unavailable). */
+  episodeId: string
   initialStoryboards: NovelPromotionStoryboard[]
   isRunningPhase: (phase: string | null | undefined) => boolean
 }
@@ -87,9 +92,12 @@ function buildPanelTargets(storyboards: NovelPromotionStoryboard[], type: 'image
 
 export function useStoryboardTaskAwareStoryboards({
   projectId,
+  episodeId,
   initialStoryboards,
   isRunningPhase,
 }: UseStoryboardTaskAwareStoryboardsProps) {
+  const queryClient = useQueryClient()
+  const prevPanelTaskPhasesRef = useRef<Record<string, TaskTargetState['phase']>>({})
   const storyboardTextTargets = useMemo(
     () => buildStoryboardTextTargets(initialStoryboards),
     [initialStoryboards],
@@ -127,6 +135,48 @@ export function useStoryboardTaskAwareStoryboards({
     panelLipSyncTargets,
     !!projectId && panelLipSyncTargets.length > 0,
   )
+
+  useEffect(() => {
+    if (!projectId || !episodeId) return
+    let shouldInvalidateEpisode = false
+    for (const storyboard of initialStoryboards) {
+      for (const panel of storyboard.panels || []) {
+        const trackers: Array<{ key: string; phase: TaskTargetState['phase'] | undefined }> = [
+          {
+            key: `panel-image:${panel.id}`,
+            phase: panelImageStates.getTaskState(`panel-image:${panel.id}`)?.phase,
+          },
+          {
+            key: `panel-video:${panel.id}`,
+            phase: panelVideoStates.getTaskState(`panel-video:${panel.id}`)?.phase,
+          },
+          {
+            key: `panel-lip:${panel.id}`,
+            phase: panelLipSyncStates.getTaskState(`panel-lip:${panel.id}`)?.phase,
+          },
+        ]
+        for (const { key, phase } of trackers) {
+          if (phase == null) continue
+          const prev = prevPanelTaskPhasesRef.current[key]
+          const wasRunning = prev === 'queued' || prev === 'processing'
+          const isRunning = phase === 'queued' || phase === 'processing'
+          if (wasRunning && !isRunning) shouldInvalidateEpisode = true
+          prevPanelTaskPhasesRef.current[key] = phase
+        }
+      }
+    }
+    if (shouldInvalidateEpisode) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.episodeData(projectId, episodeId) })
+    }
+  }, [
+    episodeId,
+    initialStoryboards,
+    panelImageStates,
+    panelLipSyncStates,
+    panelVideoStates,
+    projectId,
+    queryClient,
+  ])
 
   const taskAwareStoryboards = useMemo(() => {
     return initialStoryboards.map((storyboard) => ({

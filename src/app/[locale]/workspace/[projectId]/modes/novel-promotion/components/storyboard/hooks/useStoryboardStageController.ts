@@ -46,6 +46,7 @@ export function useStoryboardStageController({
 
   const { taskAwareStoryboards } = useStoryboardTaskAwareStoryboards({
     projectId,
+    episodeId,
     initialStoryboards,
     isRunningPhase,
   })
