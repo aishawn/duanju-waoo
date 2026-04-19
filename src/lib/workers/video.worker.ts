@@ -18,6 +18,7 @@ import { normalizeToBase64ForGeneration } from '@/lib/media/outbound-image'
 import { resolveBuiltinCapabilitiesByModelKey } from '@/lib/model-capabilities/lookup'
 import { parseModelKeyStrict } from '@/lib/model-config-contract'
 import { getProviderConfig } from '@/lib/api-config'
+import { createScopedLogger } from '@/lib/logging/core'
 import { mergePanelDurationIntoGenerationOptions } from '@/lib/video/panel-duration-merge'
 
 type AnyObj = Record<string, unknown>
@@ -218,6 +219,25 @@ async function handleVideoPanelTask(job: Job<TaskJobData>) {
     panel.duration,
     durationOptions,
   )
+
+  createScopedLogger({
+    module: 'worker.video.panel',
+    action: 'video_panel.merge_options',
+    projectId: job.data.projectId,
+    taskId: job.data.taskId,
+    userId: job.data.userId,
+  }).info({
+    message: 'video panel task: payload options after duration merge',
+    details: {
+      panelId: panel.id,
+      panelDurationRaw: panel.duration,
+      payloadVideoModel: modelId,
+      effectiveModelKey,
+      durationOptionsLength: durationOptions?.length ?? 0,
+      rawGenerationOptionsFromPayload: rawGenerationOptions,
+      mergedGenerationOptions: generationOptions,
+    },
+  })
 
   await reportTaskProgress(job, 10, {
     stage: 'generate_panel_video',

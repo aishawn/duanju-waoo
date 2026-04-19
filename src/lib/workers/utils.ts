@@ -31,6 +31,51 @@ function coerceFiniteNumber(value: unknown): number | undefined {
   return undefined
 }
 
+const VIDEO_LOG_PROMPT_PREVIEW_MAX = 200
+
+function sanitizeVideoOptionMapForLog(
+  o: Record<string, string | number | boolean>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(o)) {
+    if (v === undefined) continue
+    if (k === 'prompt' && typeof v === 'string') {
+      out.promptLength = v.length
+      out.promptPreview = v.length > VIDEO_LOG_PROMPT_PREVIEW_MAX
+        ? `${v.slice(0, VIDEO_LOG_PROMPT_PREVIEW_MAX)}…`
+        : v
+      continue
+    }
+    if ((k === 'lastFrameImageUrl') && typeof v === 'string' && v.length > 500) {
+      out.lastFrameImageUrlLengthChars = v.length
+      out.lastFrameImageUrlIsDataUrl = v.startsWith('data:')
+      continue
+    }
+    out[k] = v
+  }
+  return out
+}
+
+function summarizeVideoGenerateInvocationForLog(input: {
+  modelKey: string
+  imageUrlChars: number
+  imageLikelyBase64Payload: boolean
+  capabilityOptions: Record<string, string | number | boolean>
+  requestOptions: Record<string, string | number | boolean>
+  finalOptions: Record<string, string | number | boolean>
+}): Record<string, unknown> {
+  return {
+    modelKey: input.modelKey,
+    imageInput: {
+      chars: input.imageUrlChars,
+      likelyBase64OrDataUrl: input.imageLikelyBase64Payload,
+    },
+    fromProjectCapabilities: sanitizeVideoOptionMapForLog(input.capabilityOptions),
+    fromTaskRequest: sanitizeVideoOptionMapForLog(input.requestOptions),
+    mergedPassedToGenerateVideo: sanitizeVideoOptionMapForLog(input.finalOptions),
+  }
+}
+
 /**
  * 查询 DB 中任务是否已有 externalId（服务重启后续接轮询用，避免重复提交外部 API）
  */
@@ -508,12 +553,27 @@ export async function resolveVideoSourceFromGeneration(
     providerRequestOptions[key] = value
   }
 
+  const finalVideoOptions: Record<string, string | number | boolean> = {
+    ...providerCapabilityOptions,
+    ...providerRequestOptions,
+  }
+
+  logger.info({
+    message: 'video generateVideo invocation (merged provider params)',
+    details: summarizeVideoGenerateInvocationForLog({
+      modelKey: params.modelId,
+      imageUrlChars: typeof params.imageUrl === 'string' ? params.imageUrl.length : 0,
+      imageLikelyBase64Payload: typeof params.imageUrl === 'string'
+        && (params.imageUrl.startsWith('data:') || params.imageUrl.length > 2000),
+      capabilityOptions: providerCapabilityOptions,
+      requestOptions: providerRequestOptions,
+      finalOptions: finalVideoOptions,
+    }),
+  })
+
   const result = await withLogContext(
     { projectId: job.data.projectId, taskId: job.data.taskId, userId: params.userId },
-    () => generateVideo(params.userId, params.modelId, params.imageUrl, {
-      ...providerCapabilityOptions,
-      ...providerRequestOptions,
-    }),
+    () => generateVideo(params.userId, params.modelId, params.imageUrl, finalVideoOptions),
   )
   if (!result.success) {
     throw new Error(result.error || 'Video generation failed')
